@@ -99,7 +99,7 @@ export function HabitTracker({
         <table className="w-full border-separate border-spacing-0 text-sm">
           <thead>
             <tr>
-              <th className="sticky left-0 z-20 w-[13rem] min-w-[11rem] border-b border-border bg-paper px-4 py-2 text-left text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+              <th className="sticky left-0 z-20 w-[15.5rem] min-w-[14rem] border-b border-border bg-paper px-4 py-2 text-left text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
                 Привычка
               </th>
               {days.map((d) => (
