@@ -48,7 +48,7 @@ export function HabitTracker({
 
   return (
     <Panel className="min-w-0 p-0">
-      <div className="p-5 pb-3">
+      <div className="p-4 pb-2">
         <SectionTitle
           right={
             <button
@@ -95,19 +95,19 @@ export function HabitTracker({
         )}
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="max-w-full overflow-x-auto">
         <table className="w-full border-separate border-spacing-0 text-sm">
           <thead>
             <tr>
-              <th className="sticky left-0 z-20 w-[15.5rem] min-w-[14rem] border-b border-border bg-paper px-4 py-2 text-left text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+              <th className="sticky left-0 z-20 w-[15rem] min-w-[13rem] border-b border-border bg-paper px-4 py-2 text-left text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
                 Привычка
               </th>
               {days.map((d) => (
                 <th
                   key={d.day}
                   className={cn(
-                    "w-9 min-w-9 border-b border-l border-border px-0 py-1.5 text-center font-normal",
-                    d.isWeekStart && "border-l-border-strong",
+                    "w-9 min-w-9 border-b border-l border-border px-0 py-1 text-center font-normal",
+                    d.isWeekStart && "border-l-2 border-l-border-strong",
                     d.isWeekend && "bg-weekend",
                     d.isToday && "bg-olive-faint",
                   )}
@@ -137,7 +137,7 @@ export function HabitTracker({
               const pct = availableDays ? Math.round((doneCount / availableDays) * 100) : 0;
               return (
                 <tr key={h.id} className="group/row">
-                  <td className="sticky left-0 z-10 border-b border-border bg-paper px-4 py-1.5">
+                  <td className="sticky left-0 z-10 border-b border-border bg-paper px-4 py-1">
                     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
                       <span className="min-w-0 truncate">
                         <span className="mr-1.5">{h.emoji}</span>
@@ -170,7 +170,7 @@ export function HabitTracker({
                         key={d.day}
                         className={cn(
                           "border-b border-l border-border p-0",
-                          d.isWeekStart && "border-l-border-strong",
+                          d.isWeekStart && "border-l-2 border-l-border-strong",
                           d.isWeekend && "bg-weekend",
                           d.isFuture && "opacity-45",
                         )}
@@ -180,7 +180,7 @@ export function HabitTracker({
                           aria-label={`${h.title}, день ${d.day}`}
                           aria-pressed={active}
                           onClick={() => onToggle(h.id, d.day)}
-                          className="grid h-8 w-full place-items-center"
+                          className="grid h-7 w-full place-items-center"
                         >
                           <span
                             className={cn(
@@ -196,7 +196,7 @@ export function HabitTracker({
                       </td>
                     );
                   })}
-                  <td className="sticky right-0 z-10 border-b border-l border-border-strong bg-paper px-3 py-1.5">
+                  <td className="sticky right-0 z-10 border-b border-l border-border-strong bg-paper px-3 py-1">
                     <div className="flex items-center gap-2">
                       <span className="w-5 text-right text-xs tabular-nums text-muted-foreground">
                         {doneCount}
@@ -216,7 +216,7 @@ export function HabitTracker({
           </tbody>
         </table>
       </div>
-      <p className="px-5 py-3 text-[11px] text-muted-foreground">
+      <p className="px-4 py-2 text-[11px] text-muted-foreground">
         Проведите таблицу по горизонтали, чтобы увидеть все дни месяца.
       </p>
     </Panel>

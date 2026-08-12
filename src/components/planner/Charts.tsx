@@ -14,9 +14,9 @@ import { Panel, SectionTitle } from "./ui-bits";
 
 export function ProductivityChart({ data }: { data: { day: number; value: number }[] }) {
   return (
-    <Panel className="min-w-0">
+    <Panel className="min-w-0 p-4">
       <SectionTitle>Прогресс продуктивности</SectionTitle>
-      <div className="h-[220px] w-full">
+      <div className="h-[150px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 8, right: 8, left: -24, bottom: 0 }}>
             <defs>
@@ -72,9 +72,9 @@ export function OverallDonut({ percent }: { percent: number }) {
     { name: "rest", value: 100 - percent },
   ];
   return (
-    <Panel className="flex min-w-0 flex-col">
+    <Panel className="flex min-w-0 flex-col p-4">
       <SectionTitle>Общий прогресс месяца</SectionTitle>
-      <div className="relative h-[220px] w-full">
+      <div className="relative h-[150px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -94,7 +94,7 @@ export function OverallDonut({ percent }: { percent: number }) {
         </ResponsiveContainer>
         <div className="pointer-events-none absolute inset-0 grid place-items-center">
           <div className="text-center">
-            <div className="font-display text-4xl font-semibold tabular-nums">{percent}%</div>
+            <div className="font-display text-3xl font-semibold tabular-nums">{percent}%</div>
             <div className="text-[11px] uppercase tracking-widest text-muted-foreground">
               выполнено
             </div>

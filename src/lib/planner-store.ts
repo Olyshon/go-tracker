@@ -114,9 +114,7 @@ export function useMonthData(year: number, month: number) {
   }, []);
 
   const addGoal = useCallback((title: string) => {
-    setData((d) =>
-      d.goals.length >= 8 ? d : { ...d, goals: [...d.goals, { id: uid(), title, done: false }] },
-    );
+    setData((d) => ({ ...d, goals: [...d.goals, { id: uid(), title, done: false }] }));
   }, []);
 
   const updateGoal = useCallback((id: string, title: string) => {
@@ -131,9 +129,27 @@ export function useMonthData(year: number, month: number) {
     setData((d) => ({ ...d, goals: d.goals.filter((g) => g.id !== id) }));
   }, []);
 
+  const replaceAll = useCallback((next: MonthData) => {
+    setData({
+      goals: Array.isArray(next.goals) ? next.goals : [],
+      habits: Array.isArray(next.habits) ? next.habits : [],
+      checks: next.checks && typeof next.checks === "object" ? next.checks : {},
+    });
+  }, []);
+
+  const resetProgress = useCallback(() => {
+    setData((d) => ({
+      ...d,
+      checks: {},
+      goals: d.goals.map((g) => ({ ...g, done: false })),
+    }));
+  }, []);
+
   return {
     data,
     loaded,
+    replaceAll,
+    resetProgress,
     toggleCheck,
     addHabit,
     updateHabit,
