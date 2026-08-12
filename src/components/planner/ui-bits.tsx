@@ -10,7 +10,7 @@ export function Panel({
   return (
     <section
       className={cn(
-        "rounded-lg border border-border bg-paper p-5 shadow-[0_1px_2px_rgba(60,55,45,0.03)]",
+        "rounded-lg border border-border bg-paper p-4 shadow-[0_1px_2px_rgba(60,55,45,0.03)]",
         className,
       )}
     >
@@ -27,8 +27,8 @@ export function SectionTitle({
   right?: React.ReactNode;
 }) {
   return (
-    <div className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-      <h2 className="min-w-0 truncate font-display text-xl font-semibold tracking-tight">
+    <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+      <h2 className="min-w-0 truncate font-display text-base sm:text-lg font-semibold tracking-tight">
         {children}
       </h2>
       {right}
