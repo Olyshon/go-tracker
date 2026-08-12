@@ -105,7 +105,10 @@ function PlannerPage() {
     [days, data.habits, data.checks, habitCount],
   );
 
-  const habitsDone = data.habits.reduce((sum, h) => sum + (data.checks[h.id] ?? []).length, 0);
+  const habitsDone = data.habits.reduce(
+    (sum, h) => sum + (data.checks[h.id] ?? []).filter((d) => d <= availableDays).length,
+    0,
+  );
   const habitsPossible = habitCount * availableDays;
   const habitPct = habitsPossible ? Math.round((habitsDone / habitsPossible) * 100) : 0;
 
