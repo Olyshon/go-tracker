@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { DataMenu } from "@/components/planner/DataMenu";
 import { GoalsPanel } from "@/components/planner/GoalsPanel";
 import { HabitTracker } from "@/components/planner/HabitTracker";
 import { OverallDonut, ProductivityChart } from "@/components/planner/Charts";
@@ -32,23 +33,27 @@ function KpiBlock({
   label,
   value,
   percent,
+  hint,
 }: {
   label: string;
   value: string;
   percent: number;
+  hint?: string;
 }) {
   return (
-    <Panel className="py-4">
+    <Panel className="px-4 py-2.5">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-2">
-        <span className="min-w-0 truncate text-[11px] uppercase tracking-widest text-muted-foreground">
+        <span className="min-w-0 truncate text-[10px] uppercase tracking-widest text-muted-foreground">
           {label}
         </span>
-        <span className="shrink-0 font-display text-xl font-semibold tabular-nums">{value}</span>
+        <span className="shrink-0 font-display text-lg font-semibold leading-none tabular-nums">
+          {value}
+        </span>
       </div>
-      <div className="mt-3 flex items-center gap-3">
-        <Bar value={percent} />
-        <span className="w-10 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
-          {percent}%
+      <div className="mt-2 flex items-center gap-2.5">
+        <Bar value={percent} className="h-1" />
+        <span className="w-14 shrink-0 truncate text-right text-[10px] tabular-nums text-muted-foreground">
+          {hint ?? `${percent}%`}
         </span>
       </div>
     </Panel>
@@ -115,9 +120,9 @@ function PlannerPage() {
   };
 
   return (
-    <main className="min-h-screen px-4 py-8 sm:px-6 lg:px-10">
-      <div className="mx-auto max-w-[1500px] space-y-5">
-        <header className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4">
+    <main className="min-h-screen px-4 py-5 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1500px] space-y-3">
+        <header className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3">
           <div className="min-w-0">
             <p className="text-[11px] uppercase tracking-[0.35em] text-muted-foreground">
               Планер GO
@@ -131,7 +136,7 @@ function PlannerPage() {
               >
                 <ChevronLeft className="size-4" />
               </button>
-              <h1 className="min-w-0 truncate font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+              <h1 className="min-w-0 truncate font-display text-2xl font-semibold tracking-tight sm:text-3xl">
                 {MONTHS_RU[cursor.month]}{" "}
                 <span className="text-muted-foreground">{cursor.year}</span>
               </h1>
@@ -145,18 +150,26 @@ function PlannerPage() {
               </button>
             </div>
           </div>
-          {!isCurrentMonth && (
-            <button
-              type="button"
-              onClick={() => setCursor({ year: today.getFullYear(), month: today.getMonth() })}
-              className="shrink-0 rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-olive hover:text-olive"
-            >
-              Текущий месяц
-            </button>
-          )}
+          <div className="flex shrink-0 items-center gap-2">
+            {!isCurrentMonth && (
+              <button
+                type="button"
+                onClick={() => setCursor({ year: today.getFullYear(), month: today.getMonth() })}
+                className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-olive hover:text-olive"
+              >
+                Текущий месяц
+              </button>
+            )}
+            <DataMenu
+              data={data}
+              fileLabel={`${cursor.year}-${String(cursor.month + 1).padStart(2, "0")}`}
+              onImport={store.replaceAll}
+              onReset={store.resetProgress}
+            />
+          </div>
         </header>
 
-        <div className="grid gap-5 lg:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-3">
           <KpiBlock
             label="Выполненные цели"
             value={`${goalsDone} / ${data.goals.length}`}
@@ -164,13 +177,14 @@ function PlannerPage() {
           />
           <KpiBlock
             label="Выполненные привычки"
-            value={`${habitsDone} / ${habitsPossible}`}
+            value={`${habitPct}%`}
             percent={habitPct}
+            hint={`${habitsDone}/${habitsPossible}`}
           />
           <KpiBlock label="Общий прогресс" value={`${overall}%`} percent={overall} />
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)_minmax(0,18rem)]">
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)_minmax(0,18rem)]">
           <GoalsPanel
             goals={data.goals}
             onToggle={store.toggleGoal}
