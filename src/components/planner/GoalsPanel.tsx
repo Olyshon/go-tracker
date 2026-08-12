@@ -19,13 +19,13 @@ export function GoalsPanel({ goals, onToggle, onAdd, onUpdate, onRemove }: Props
   const [newTitle, setNewTitle] = useState("");
 
   return (
-    <Panel>
+    <Panel className="p-4">
       <SectionTitle>Цели месяца</SectionTitle>
-      <ol className="space-y-1">
+      <ol>
         {goals.map((g, i) => (
           <li
             key={g.id}
-            className="group grid grid-cols-[1.25rem_minmax(0,1fr)_auto] items-center gap-3 border-b border-border/70 py-2 last:border-b-0"
+            className="group grid grid-cols-[1.25rem_minmax(0,1fr)_auto] items-center gap-2.5 border-b border-border/70 py-1.5 last:border-b-0"
           >
             <span className="text-xs tabular-nums text-muted-foreground">
               {String(i + 1).padStart(2, "0")}
@@ -96,10 +96,9 @@ export function GoalsPanel({ goals, onToggle, onAdd, onUpdate, onRemove }: Props
         ))}
       </ol>
 
-      {goals.length < 8 &&
-        (adding ? (
+      {adding ? (
           <form
-            className="mt-3 flex gap-2"
+            className="mt-2 flex gap-2"
             onSubmit={(e) => {
               e.preventDefault();
               if (newTitle.trim()) onAdd(newTitle.trim());
@@ -121,15 +120,15 @@ export function GoalsPanel({ goals, onToggle, onAdd, onUpdate, onRemove }: Props
               Добавить
             </button>
           </form>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setAdding(true)}
-            className="mt-3 inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-olive"
+      ) : (
+        <button
+          type="button"
+          onClick={() => setAdding(true)}
+          className="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-olive"
           >
-            <Plus className="size-3.5" /> Добавить цель
-          </button>
-        ))}
+          <Plus className="size-3.5" /> Добавить цель
+        </button>
+      )}
     </Panel>
   );
 }
