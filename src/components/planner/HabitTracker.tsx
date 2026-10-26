@@ -182,7 +182,7 @@ export function HabitTracker({
                                 : planned
                                   ? "border-border-strong bg-muted/60 text-muted-foreground/50 hover:border-olive hover:bg-olive-faint"
                                   : "border-border bg-background hover:border-olive hover:bg-olive-faint",
-                              missed && "border-dashed border-destructive/35",
+                              missed && "border-dashed border-destructive/30 bg-background text-transparent",
                             )}
                           >
                             {active ? (
