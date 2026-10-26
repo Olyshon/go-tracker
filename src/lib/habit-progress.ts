@@ -66,13 +66,13 @@ export function habitProgress(
     if (!elapsedDays.length) continue;
     // Partial calendar week at month boundary: prorate target by its length.
     const weekTarget = Math.min(times, week.length, Math.max(1, Math.round((times * week.length) / 7)));
-    // Week in progress: only expect what is proportional to elapsed days, never more than done would allow later.
-    const inProgress = elapsedDays.length < week.length;
+    // Week in progress: expect only the share of the target for elapsed days (floored),
+    // so remaining days are never counted as missed; completions already made always count.
     const actual = doneIn(week);
-    const target = inProgress
-      ? Math.max(Math.min(actual, weekTarget), Math.ceil((weekTarget * elapsedDays.length) / week.length) - 0)
+    const inProgress = elapsedDays.length < week.length;
+    const expected = inProgress
+      ? Math.max(Math.min(actual, weekTarget), Math.floor((weekTarget * elapsedDays.length) / week.length))
       : weekTarget;
-    const expected = inProgress ? Math.min(weekTarget, Math.max(target, 0)) : weekTarget;
     if (expected <= 0) continue;
     done += Math.min(actual, expected);
     possible += expected;

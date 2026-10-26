@@ -100,14 +100,14 @@ export function useMonthData(year: number, month: number) {
     });
   }, []);
 
-  const addHabit = useCallback((title: string, emoji: string) => {
-    setData((d) => ({ ...d, habits: [...d.habits, { id: uid(), title, emoji }] }));
+  const addHabit = useCallback((title: string, emoji: string, freq?: HabitFrequency) => {
+    setData((d) => ({ ...d, habits: [...d.habits, { id: uid(), title, emoji, freq }] }));
   }, []);
 
-  const updateHabit = useCallback((id: string, title: string, emoji: string) => {
+  const updateHabit = useCallback((id: string, title: string, emoji: string, freq?: HabitFrequency) => {
     setData((d) => ({
       ...d,
-      habits: d.habits.map((h) => (h.id === id ? { ...h, title, emoji } : h)),
+      habits: d.habits.map((h) => (h.id === id ? { ...h, title, emoji, freq } : h)),
     }));
   }, []);
 
