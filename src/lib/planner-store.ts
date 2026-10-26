@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 
 export type Goal = { id: string; title: string; done: boolean };
-export type Habit = { id: string; title: string; emoji: string };
+export type HabitFrequency =
+  | { type: "daily" }
+  /** days: preferred JS weekdays (0=Sun), suggestions only */
+  | { type: "weekly"; times: number; days?: number[] }
+  | { type: "monthly"; times: number };
+/** freq is optional: legacy habits without it are daily. */
+export type Habit = { id: string; title: string; emoji: string; freq?: HabitFrequency | undefined };
 export type MonthData = {
   goals: Goal[];
   habits: Habit[];
@@ -94,14 +100,14 @@ export function useMonthData(year: number, month: number) {
     });
   }, []);
 
-  const addHabit = useCallback((title: string, emoji: string) => {
-    setData((d) => ({ ...d, habits: [...d.habits, { id: uid(), title, emoji }] }));
+  const addHabit = useCallback((title: string, emoji: string, freq?: HabitFrequency) => {
+    setData((d) => ({ ...d, habits: [...d.habits, { id: uid(), title, emoji, freq }] }));
   }, []);
 
-  const updateHabit = useCallback((id: string, title: string, emoji: string) => {
+  const updateHabit = useCallback((id: string, title: string, emoji: string, freq?: HabitFrequency) => {
     setData((d) => ({
       ...d,
-      habits: d.habits.map((h) => (h.id === id ? { ...h, title, emoji } : h)),
+      habits: d.habits.map((h) => (h.id === id ? { ...h, title, emoji, freq } : h)),
     }));
   }, []);
 

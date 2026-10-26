@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Check, Pencil, Plus, X } from "lucide-react";
-import type { Habit } from "@/lib/planner-store";
+import type { Habit, HabitFrequency } from "@/lib/planner-store";
+import { freqLabel, freqOf, habitProgress, isPlanned } from "@/lib/habit-progress";
 import { WEEKDAYS_RU } from "@/lib/planner-store";
 import { cn } from "@/lib/utils";
 import { Panel, SectionTitle } from "./ui-bits";
@@ -19,9 +20,11 @@ type Props = {
   days: DayInfo[];
   checks: Record<string, number[]>;
   availableDays: number;
+  year: number;
+  month: number;
   onToggle: (habitId: string, day: number) => void;
-  onAdd: (title: string, emoji: string) => void;
-  onUpdate: (id: string, title: string, emoji: string) => void;
+  onAdd: (title: string, emoji: string, freq: HabitFrequency) => void;
+  onUpdate: (id: string, title: string, emoji: string, freq: HabitFrequency) => void;
   onRemove: (id: string) => void;
 };
 
@@ -30,19 +33,27 @@ export function HabitTracker({
   days,
   checks,
   availableDays,
+  year,
+  month,
   onToggle,
   onAdd,
   onUpdate,
   onRemove,
 }: Props) {
-  const [form, setForm] = useState<{ id: string | null; title: string; emoji: string } | null>(null);
+  const [form, setForm] = useState<FormState | null>(null);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form || !form.title.trim()) return;
     const emoji = form.emoji.trim() || "•";
-    if (form.id) onUpdate(form.id, form.title.trim(), emoji);
-    else onAdd(form.title.trim(), emoji);
+    const freq: HabitFrequency =
+      form.type === "daily"
+        ? { type: "daily" }
+        : form.type === "weekly"
+          ? { type: "weekly", times: clamp(form.times, 1, 7), days: [...form.days].sort() }
+          : { type: "monthly", times: clamp(form.times, 1, 31) };
+    if (form.id) onUpdate(form.id, form.title.trim(), emoji, freq);
+    else onAdd(form.title.trim(), emoji, freq);
     setForm(null);
   };
 
@@ -53,7 +64,7 @@ export function HabitTracker({
           right={
             <button
               type="button"
-              onClick={() => setForm({ id: null, title: "", emoji: "" })}
+              onClick={() => setForm(newForm())}
               className="inline-flex shrink-0 items-center gap-1 rounded-md border border-border px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-olive hover:text-olive"
             >
               <Plus className="size-3.5" /> Добавить привычку
@@ -63,36 +74,7 @@ export function HabitTracker({
           Трекер продуктивности
         </SectionTitle>
 
-        {form && (
-          <form onSubmit={submit} className="mb-3 flex flex-wrap items-center gap-2">
-            <input
-              value={form.emoji}
-              onChange={(e) => setForm({ ...form, emoji: e.target.value })}
-              placeholder="🙂"
-              className="w-14 rounded-md border border-border bg-background px-2 py-1.5 text-center text-sm outline-none focus:border-olive"
-            />
-            <input
-              autoFocus
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              placeholder="Название привычки"
-              className="min-w-0 flex-1 rounded-md border border-border bg-background px-2 py-1.5 text-sm outline-none focus:border-olive"
-            />
-            <button
-              type="submit"
-              className="rounded-md bg-olive px-3 py-1.5 text-xs text-primary-foreground"
-            >
-              {form.id ? "Сохранить" : "Добавить"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setForm(null)}
-              className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground"
-            >
-              Отмена
-            </button>
-          </form>
-        )}
+        {form && <HabitForm form={form} setForm={setForm} onSubmit={submit} />}
       </div>
 
       <div className="max-w-full overflow-x-auto">
@@ -134,20 +116,28 @@ export function HabitTracker({
             {habits.map((h) => {
               const done = checks[h.id] ?? [];
               const doneCount = done.length;
-              const pct = availableDays ? Math.round((doneCount / availableDays) * 100) : 0;
+              const { pct } = habitProgress(h, done, year, month, days.length, availableDays);
+              const f = freqOf(h);
               return (
                 <tr key={h.id} className="group/row">
                   <td className="sticky left-0 z-10 border-b border-border bg-paper px-4 py-1">
                     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-                      <span className="min-w-0 truncate">
-                        <span className="mr-1.5">{h.emoji}</span>
-                        {h.title}
+                      <span className="min-w-0" title={h.title}>
+                        <span className="block truncate">
+                          <span className="mr-1.5">{h.emoji}</span>
+                          {h.title}
+                        </span>
+                        {f.type !== "daily" && (
+                          <span className="block truncate text-[10px] leading-tight text-muted-foreground">
+                            {freqLabel(h)}
+                          </span>
+                        )}
                       </span>
                       <span className="flex shrink-0 items-center gap-0.5">
                         <button
                           type="button"
                           aria-label="Переименовать привычку"
-                          onClick={() => setForm({ id: h.id, title: h.title, emoji: h.emoji })}
+                          onClick={() => setForm(formFrom(h))}
                           className="rounded p-1 text-muted-foreground opacity-0 transition hover:text-foreground group-hover/row:opacity-100 focus:opacity-100"
                         >
                           <Pencil className="size-3" />
@@ -165,6 +155,8 @@ export function HabitTracker({
                   </td>
                   {days.map((d) => {
                     const active = done.includes(d.day);
+                    const planned = isPlanned(h, d.weekday);
+                    const missed = planned && !active && !d.isFuture && !d.isToday;
                     return (
                       <td
                         key={d.day}
@@ -172,12 +164,12 @@ export function HabitTracker({
                           "border-b border-l border-border p-0",
                           d.isWeekStart && "border-l-2 border-l-border-strong",
                           d.isWeekend && "bg-weekend",
-                          d.isFuture && "opacity-45",
+                          d.isFuture && !planned && "opacity-45",
                         )}
                       >
                         <button
                           type="button"
-                          aria-label={`${h.title}, день ${d.day}`}
+                          aria-label={`${h.title}, день ${d.day}${planned ? " (запланировано)" : ""}`}
                           aria-pressed={active}
                           onClick={() => onToggle(h.id, d.day)}
                           className="grid h-7 w-full place-items-center"
@@ -187,10 +179,17 @@ export function HabitTracker({
                               "grid size-[18px] place-items-center rounded-[4px] border transition-colors",
                               active
                                 ? "border-olive bg-olive text-primary-foreground"
-                                : "border-border-strong bg-background hover:border-olive hover:bg-olive-faint",
+                                : planned
+                                  ? "border-border-strong bg-muted/60 text-muted-foreground/50 hover:border-olive hover:bg-olive-faint"
+                                  : "border-border bg-background hover:border-olive hover:bg-olive-faint",
+                              missed && "border-dashed border-destructive/30 bg-background text-transparent",
                             )}
                           >
-                            {active && <Check className="size-3" strokeWidth={3} />}
+                            {active ? (
+                              <Check className="size-3" strokeWidth={3} />
+                            ) : planned ? (
+                              <Check className="size-3" strokeWidth={2} />
+                            ) : null}
                           </span>
                         </button>
                       </td>
@@ -217,8 +216,156 @@ export function HabitTracker({
         </table>
       </div>
       <p className="px-4 py-2 text-[11px] text-muted-foreground">
-        Проведите таблицу по горизонтали, чтобы увидеть все дни месяца.
+        Серая галочка — запланировано, пунктир — пропущено. Отмечать можно любой день.
       </p>
     </Panel>
+  );
+}
+
+const clamp = (n: number, a: number, b: number) => Math.max(a, Math.min(b, Math.round(n) || a));
+
+const EMOJIS = ["⏰","🏃","🚿","🥣","💪","🎯","📱","💰","📚","📅","🧘","🛏️","💧","🥗","✍️","🎨","🎧","🚶","🧹","🌿"];
+const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
+
+type FormState = {
+  id: string | null;
+  title: string;
+  emoji: string;
+  type: HabitFrequency["type"];
+  times: number;
+  days: number[];
+};
+
+const newForm = (): FormState => ({ id: null, title: "", emoji: "", type: "daily", times: 3, days: [] });
+const formFrom = (h: Habit): FormState => {
+  const f = freqOf(h);
+  return {
+    id: h.id,
+    title: h.title,
+    emoji: h.emoji,
+    type: f.type,
+    times: f.type === "daily" ? 3 : f.times,
+    days: f.type === "weekly" ? (f.days ?? []) : [],
+  };
+};
+
+function HabitForm({
+  form,
+  setForm,
+  onSubmit,
+}: {
+  form: FormState;
+  setForm: (f: FormState | null) => void;
+  onSubmit: (e: React.FormEvent) => void;
+}) {
+  const field = "rounded-md border border-border bg-background px-2 py-1.5 text-sm outline-none focus:border-olive";
+  return (
+    <form onSubmit={onSubmit} className="mb-3 space-y-2 rounded-md border border-border bg-background/60 p-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          value={form.emoji}
+          onChange={(e) => setForm({ ...form, emoji: e.target.value })}
+          placeholder="🙂"
+          aria-label="Свой эмодзи"
+          className={cn(field, "w-14 text-center")}
+        />
+        <input
+          autoFocus
+          value={form.title}
+          onChange={(e) => setForm({ ...form, title: e.target.value })}
+          placeholder="Название привычки"
+          className={cn(field, "min-w-0 flex-1")}
+        />
+      </div>
+      <div className="flex flex-wrap gap-1">
+        {EMOJIS.map((em) => (
+          <button
+            key={em}
+            type="button"
+            onClick={() => setForm({ ...form, emoji: em })}
+            className={cn(
+              "grid size-7 place-items-center rounded-md border text-sm transition-colors",
+              form.emoji === em ? "border-olive bg-olive-faint" : "border-transparent hover:border-border",
+            )}
+          >
+            {em}
+          </button>
+        ))}
+      </div>
+      <div className="flex flex-wrap items-center gap-2 text-xs">
+        <span className="text-muted-foreground">Частота:</span>
+        {(
+          [
+            ["daily", "Каждый день"],
+            ["weekly", "Раз в неделю"],
+            ["monthly", "Раз в месяц"],
+          ] as const
+        ).map(([t, label]) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() =>
+              setForm({ ...form, type: t, times: t === "weekly" ? Math.min(form.times, 7) : form.times })
+            }
+            className={cn(
+              "rounded-md border px-2.5 py-1 transition-colors",
+              form.type === t ? "border-olive bg-olive-faint text-olive" : "border-border text-muted-foreground",
+            )}
+          >
+            {t === "daily" ? label : label.replace("Раз", "N раз")}
+          </button>
+        ))}
+        {form.type !== "daily" && (
+          <label className="flex items-center gap-1.5 text-muted-foreground">
+            N =
+            <input
+              type="number"
+              min={1}
+              max={form.type === "weekly" ? 7 : 31}
+              value={form.times}
+              onChange={(e) => setForm({ ...form, times: Number(e.target.value) })}
+              className={cn(field, "w-16 py-1 text-xs")}
+            />
+          </label>
+        )}
+      </div>
+      {form.type === "weekly" && (
+        <div className="flex flex-wrap items-center gap-1 text-xs">
+          <span className="mr-1 text-muted-foreground">Желательные дни:</span>
+          {WEEK_ORDER.map((wd) => {
+            const on = form.days.includes(wd);
+            return (
+              <button
+                key={wd}
+                type="button"
+                aria-pressed={on}
+                onClick={() =>
+                  setForm({ ...form, days: on ? form.days.filter((x) => x !== wd) : [...form.days, wd] })
+                }
+                className={cn(
+                  "w-8 rounded-md border py-1 lowercase transition-colors",
+                  on ? "border-olive bg-olive-faint text-olive" : "border-border text-muted-foreground",
+                )}
+              >
+                {WEEKDAYS_RU[wd]}
+              </button>
+            );
+          })}
+          <span className="ml-1 text-[11px] text-muted-foreground">необязательно</span>
+        </div>
+      )}
+      <div className="flex gap-2">
+        <button type="submit" className="rounded-md bg-olive px-3 py-1.5 text-xs text-primary-foreground">
+          {form.id ? "Сохранить" : "Добавить"}
+        </button>
+        <button
+          type="button"
+          onClick={() => setForm(null)}
+          className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground"
+        >
+          Отмена
+        </button>
+      </div>
+    </form>
   );
 }

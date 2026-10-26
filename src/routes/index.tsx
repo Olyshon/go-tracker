@@ -7,6 +7,7 @@ import { HabitTracker } from "@/components/planner/HabitTracker";
 import { OverallDonut, ProductivityChart } from "@/components/planner/Charts";
 import { Bar, Panel } from "@/components/planner/ui-bits";
 import { MONTHS_RU, daysInMonth, useMonthData } from "@/lib/planner-store";
+import { dayScore, habitProgress } from "@/lib/habit-progress";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -91,7 +92,7 @@ function PlannerPage() {
     [cursor.year, cursor.month, total, isCurrentMonth, isPast, today],
   );
 
-  const availableDays = isCurrentMonth ? today.getDate() : isPast ? total : total;
+  const availableDays = isCurrentMonth ? today.getDate() : isPast ? total : 0;
 
   const habitCount = data.habits.length;
 
@@ -99,18 +100,20 @@ function PlannerPage() {
     () =>
       days.map((d) => {
         if (d.isFuture || !habitCount) return { day: d.day, value: 0 };
-        const done = data.habits.filter((h) => (data.checks[h.id] ?? []).includes(d.day)).length;
-        return { day: d.day, value: Math.round((done / habitCount) * 100) };
+        return { day: d.day, value: dayScore(data.habits, data.checks, d.day, d.weekday) };
       }),
     [days, data.habits, data.checks, habitCount],
   );
 
-  const habitsDone = data.habits.reduce(
-    (sum, h) => sum + (data.checks[h.id] ?? []).filter((d) => d <= availableDays).length,
-    0,
+  const perHabit = data.habits.map((h) =>
+    habitProgress(h, data.checks[h.id] ?? [], cursor.year, cursor.month, total, availableDays),
   );
-  const habitsPossible = habitCount * availableDays;
-  const habitPct = habitsPossible ? Math.round((habitsDone / habitsPossible) * 100) : 0;
+  const habitsDone = perHabit.reduce((s, p) => s + p.done, 0);
+  const habitsPossible = perHabit.reduce((s, p) => s + p.possible, 0);
+  // Average of per-habit percentages so every frequency type weighs equally.
+  const habitPct = perHabit.length
+    ? Math.min(100, Math.round(perHabit.reduce((s, p) => s + p.pct, 0) / perHabit.length))
+    : 0;
 
   const goalsDone = data.goals.filter((g) => g.done).length;
   const goalPct = data.goals.length ? Math.round((goalsDone / data.goals.length) * 100) : 0;
@@ -204,6 +207,8 @@ function PlannerPage() {
           days={days}
           checks={data.checks}
           availableDays={availableDays}
+          year={cursor.year}
+          month={cursor.month}
           onToggle={store.toggleCheck}
           onAdd={store.addHabit}
           onUpdate={store.updateHabit}
