@@ -49,7 +49,7 @@ describe('safe monthly habit continuity', () => {
   it('termination keeps an earlier revision and allows reload of a same-month new habit', () => {
     const p = putHabit(migrate(), gym, '2026-10-01', true);
     expect(monthData(p,2026,9).habits.map(h=>h.id)).toEqual(['custom']);
-    expect(p.months['2026-10']?.checks.h5).toEqual([1,3,5]);
+    expect(p.months['2026-10']?.checks['h5']).toEqual([1,3,5]);
   });
   it('refresh and October-November-October preserve records without writing legacy keys', () => {
     const values = new Map([['planner-go:2026-10', raw]]);

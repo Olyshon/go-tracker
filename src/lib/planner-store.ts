@@ -10,7 +10,7 @@ export type HabitFrequency =
   | { type: "weekly"; times: number; days?: number[] }
   | { type: "monthly"; times: number };
 /** freq is optional: legacy habits without it are daily. */
-export type Habit = { id: string; title: string; emoji: string; freq?: HabitFrequency | undefined; startDate?: string; endDate?: string };
+export type Habit = { id: string; title: string; emoji: string; freq?: HabitFrequency | undefined; startDate?: string | undefined; endDate?: string | undefined };
 export type MonthData = {
   goals: Goal[];
   habits: Habit[];

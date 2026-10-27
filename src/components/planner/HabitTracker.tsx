@@ -238,7 +238,7 @@ type FormState = {
   times: number;
   days: number[];
   startDate: string;
-  endDate?: string;
+  endDate?: string | undefined;
 };
 
 const newForm = (): FormState => ({ id: null, title: "", emoji: "", type: "daily", times: 3, days: [], startDate: dateKey(new Date()) });
