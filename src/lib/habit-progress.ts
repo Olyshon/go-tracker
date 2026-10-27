@@ -1,3 +1,4 @@
+import { isActive } from "./habit-dates";
 import type { Habit, HabitFrequency } from "./planner-store";
 
 export const freqOf = (h: Habit): HabitFrequency => h.freq ?? { type: "daily" };
@@ -44,11 +45,14 @@ export function habitProgress(
   elapsed: number,
 ): Progress {
   const f = freqOf(h);
+  const activeDays = Array.from({ length: total }, (_, i) => i + 1).filter(d => isActive(h, year, month, d));
+  checked = [...new Set(checked)].filter(d => activeDays.includes(d) && d <= elapsed);
   const doneIn = (days: number[]) => checked.filter((d) => days.includes(d)).length;
 
   if (f.type === "daily") {
     const done = checked.filter((d) => d <= elapsed).length;
-    return { done, possible: elapsed, pct: pctOf(done, elapsed) };
+    const possible = activeDays.filter(d => d <= elapsed).length;
+    return { done, possible, pct: pctOf(done, possible) };
   }
 
   if (f.type === "monthly") {
@@ -61,7 +65,8 @@ export function habitProgress(
   const times = Math.max(1, Math.min(7, f.times));
   let done = 0;
   let possible = 0;
-  for (const week of monthWeeks(year, month, total)) {
+  for (const calendarWeek of monthWeeks(year, month, total)) {
+    const week = calendarWeek.filter(d => activeDays.includes(d));
     const elapsedDays = week.filter((d) => d <= elapsed);
     if (!elapsedDays.length) continue;
     // Partial calendar week at month boundary: prorate target by its length.
@@ -81,7 +86,8 @@ export function habitProgress(
 }
 
 /** Daily productivity: completions vs planned habits that day, capped at 100. */
-export function dayScore(habits: Habit[], checks: Record<string, number[]>, day: number, weekday: number) {
+export function dayScore(habits: Habit[], checks: Record<string, number[]>, day: number, weekday: number, year?: number, month?: number) {
+  if (year !== undefined && month !== undefined) habits = habits.filter(h => isActive(h, year, month, day));
   const planned = habits.filter((h) => isPlanned(h, weekday));
   const doneAll = habits.filter((h) => (checks[h.id] ?? []).includes(day)).length;
   if (planned.length) return Math.min(100, Math.round((doneAll / planned.length) * 100));

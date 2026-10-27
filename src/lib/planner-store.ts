@@ -1,4 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+import { dateKey, monthKey } from './habit-dates';
+import { emptyPlanner, monthData, putHabit, readPlanner, STORAGE_KEY, validateMonth, type PlannerData } from './planner-persistence';
 
 export type Goal = { id: string; title: string; done: boolean };
 export type HabitFrequency =
@@ -7,7 +10,7 @@ export type HabitFrequency =
   | { type: "weekly"; times: number; days?: number[] }
   | { type: "monthly"; times: number };
 /** freq is optional: legacy habits without it are daily. */
-export type Habit = { id: string; title: string; emoji: string; freq?: HabitFrequency | undefined };
+export type Habit = { id: string; title: string; emoji: string; freq?: HabitFrequency | undefined; startDate?: string; endDate?: string };
 export type MonthData = {
   goals: Goal[];
   habits: Habit[];
@@ -49,120 +52,62 @@ export const DEFAULT_HABITS: Habit[] = [
   { id: "h12", title: "Ложиться спать до 22:00", emoji: "🛏️" },
 ];
 
-const DEFAULT_GOALS: Goal[] = [
-  "Достичь дзен",
-  "Вести финансовый учёт",
-  "Планирование каждого воскресенья",
-  "Завершить проект",
-  "Защитить таблицу",
-  "Убрать тревожность",
-].map((title, i) => ({ id: `g${i + 1}`, title, done: false }));
-
-const emptyMonth = (): MonthData => ({
-  goals: DEFAULT_GOALS.map((g) => ({ ...g })),
-  habits: DEFAULT_HABITS.map((h) => ({ ...h })),
-  checks: {},
-});
-
-const keyFor = (year: number, month: number) =>
-  `planner-go:${year}-${String(month + 1).padStart(2, "0")}`;
-
 export function daysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate();
 }
 
 export function useMonthData(year: number, month: number) {
-  const [data, setData] = useState<MonthData>(emptyMonth);
+  const [planner, setPlanner] = useState<PlannerData>(emptyPlanner);
   const [loaded, setLoaded] = useState(false);
-
+  const [error, setError] = useState('');
   useEffect(() => {
-    setLoaded(false);
-    if (typeof window === "undefined") return;
-    try {
-      const raw = window.localStorage.getItem(keyFor(year, month));
-      setData(raw ? (JSON.parse(raw) as MonthData) : emptyMonth());
-    } catch {
-      setData(emptyMonth());
-    }
-    setLoaded(true);
-  }, [year, month]);
-
-  useEffect(() => {
-    if (!loaded || typeof window === "undefined") return;
-    window.localStorage.setItem(keyFor(year, month), JSON.stringify(data));
-  }, [data, loaded, year, month]);
-
-  const toggleCheck = useCallback((habitId: string, day: number) => {
-    setData((d) => {
-      const cur = d.checks[habitId] ?? [];
-      const next = cur.includes(day) ? cur.filter((x) => x !== day) : [...cur, day].sort((a, b) => a - b);
-      return { ...d, checks: { ...d.checks, [habitId]: next } };
+    try { setPlanner(readPlanner(window.localStorage)); setLoaded(true); }
+    catch { setError('Не удалось безопасно прочитать данные. Исходные записи сохранены; изменения заблокированы.'); }
+  }, []);
+  const data = useMemo(() => monthData(planner, year, month), [planner, year, month]);
+  const key = monthKey(year, month);
+  const commit = useCallback((change: (p: PlannerData) => PlannerData) => {
+    if (!loaded) return;
+    setPlanner(p => {
+      const next = change(p);
+      try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); setError(''); return next; }
+      catch { setError('Не удалось сохранить изменения. Освободите место в браузере и попробуйте снова.'); return p; }
     });
-  }, []);
-
-  const addHabit = useCallback((title: string, emoji: string, freq?: HabitFrequency) => {
-    setData((d) => ({ ...d, habits: [...d.habits, { id: uid(), title, emoji, freq }] }));
-  }, []);
-
-  const updateHabit = useCallback((id: string, title: string, emoji: string, freq?: HabitFrequency) => {
-    setData((d) => ({
-      ...d,
-      habits: d.habits.map((h) => (h.id === id ? { ...h, title, emoji, freq } : h)),
-    }));
-  }, []);
-
-  const removeHabit = useCallback((id: string) => {
-    setData((d) => {
-      const checks = { ...d.checks };
-      delete checks[id];
-      return { ...d, habits: d.habits.filter((h) => h.id !== id), checks };
-    });
-  }, []);
-
-  const addGoal = useCallback((title: string) => {
-    setData((d) => ({ ...d, goals: [...d.goals, { id: uid(), title, done: false }] }));
-  }, []);
-
-  const updateGoal = useCallback((id: string, title: string) => {
-    setData((d) => ({ ...d, goals: d.goals.map((g) => (g.id === id ? { ...g, title } : g)) }));
-  }, []);
-
-  const toggleGoal = useCallback((id: string) => {
-    setData((d) => ({ ...d, goals: d.goals.map((g) => (g.id === id ? { ...g, done: !g.done } : g)) }));
-  }, []);
-
-  const removeGoal = useCallback((id: string) => {
-    setData((d) => ({ ...d, goals: d.goals.filter((g) => g.id !== id) }));
-  }, []);
-
-  const replaceAll = useCallback((next: MonthData) => {
-    setData({
-      goals: Array.isArray(next.goals) ? next.goals : [],
-      habits: Array.isArray(next.habits) ? next.habits : [],
-      checks: next.checks && typeof next.checks === "object" ? next.checks : {},
-    });
-  }, []);
-
-  const resetProgress = useCallback(() => {
-    setData((d) => ({
-      ...d,
-      checks: {},
-      goals: d.goals.map((g) => ({ ...g, done: false })),
-    }));
-  }, []);
-
-  return {
-    data,
-    loaded,
-    replaceAll,
-    resetProgress,
-    toggleCheck,
-    addHabit,
-    updateHabit,
-    removeHabit,
-    addGoal,
-    updateGoal,
-    toggleGoal,
-    removeGoal,
+  }, [loaded]);
+  const changeMonth = useCallback((change: (d: MonthData) => MonthData) => commit(p => {
+    const next = change(monthData(p, year, month));
+    return { ...p, months: { ...p.months, [key]: { goals: next.goals, checks: next.checks } } };
+  }), [commit, year, month, key]);
+  const toggleCheck = (id: string, day: number) => changeMonth(d => {
+    const cur = d.checks[id] ?? [];
+    return { ...d, checks: { ...d.checks, [id]: cur.includes(day) ? cur.filter(x => x !== day) : [...cur, day].sort((a,b) => a-b) } };
+  });
+  const addHabit = (title: string, emoji: string, freq?: HabitFrequency, startDate = dateKey(new Date()), endDate?: string) => {
+    const habit = { id: uid(), title, emoji, freq, startDate, endDate };
+    commit(p => putHabit(p, habit, `${startDate.slice(0,7)}-01`));
   };
+  const updateHabit = (id: string, title: string, emoji: string, freq?: HabitFrequency, startDate?: string, endDate?: string) => commit(p => {
+    const old = monthData(p, year, month).habits.find(h => h.id === id);
+    if (!old) return p;
+    return putHabit(p, { ...old, title, emoji, freq, startDate, endDate }, `${key}-01`);
+  });
+  // Ending replaces destructive deletion; earlier revisions and all checks remain intact.
+  const removeHabit = (id: string) => commit(p => {
+    const old = monthData(p, year, month).habits.find(h => h.id === id);
+    return old ? putHabit(p, { ...old, endDate: dateKey(new Date(year, month, 0)) }, `${key}-01`) : p;
+  });
+  const addGoal = (title: string) => changeMonth(d => ({ ...d, goals: [...d.goals, { id: uid(), title, done: false }] }));
+  const updateGoal = (id: string, title: string) => changeMonth(d => ({ ...d, goals: d.goals.map(g => g.id === id ? { ...g, title } : g) }));
+  const toggleGoal = (id: string) => changeMonth(d => ({ ...d, goals: d.goals.map(g => g.id === id ? { ...g, done: !g.done } : g) }));
+  const removeGoal = (id: string) => changeMonth(d => ({ ...d, goals: d.goals.filter(g => g.id !== id) }));
+  const replaceAll = (input: MonthData) => {
+    const next = validateMonth(input);
+    commit(p => {
+      let result = p;
+      for (const h of next.habits) result = putHabit(result, { ...h, startDate: h.startDate ?? `${key}-01` }, `${key}-01`);
+      return { ...result, months: { ...result.months, [key]: { goals: next.goals, checks: next.checks } } };
+    });
+  };
+  const resetProgress = () => changeMonth(d => ({ ...d, checks: {}, goals: d.goals.map(g => ({ ...g, done: false })) }));
+  return { data, loaded, error, replaceAll, resetProgress, toggleCheck, addHabit, updateHabit, removeHabit, addGoal, updateGoal, toggleGoal, removeGoal };
 }
