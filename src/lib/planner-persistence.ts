@@ -2,7 +2,7 @@ import type { Habit, MonthData } from './planner-store';
 import { dateKey, isActive, monthKey } from './habit-dates';
 
 export const STORAGE_KEY = 'go-tracker:v2';
-type Revision = { from: string; habit: Habit };
+type Revision = { from: string; habit: Habit; ended?: boolean };
 export type PlannerData = {
   version: 2;
   habits: Record<string, Revision[]>;
@@ -15,6 +15,7 @@ export function validateMonth(value: unknown): MonthData {
   if (!value || typeof value !== 'object') throw new Error('Некорректный файл месяца');
   const d = value as MonthData;
   if (!Array.isArray(d.habits) || !Array.isArray(d.goals) || !d.checks || typeof d.checks !== 'object' || Array.isArray(d.checks)) throw new Error('Некорректный файл месяца');
+  if (new Set(d.habits.map(h => h?.id)).size !== d.habits.length || new Set(d.goals.map(g => g?.id)).size !== d.goals.length) throw new Error('Повторяющиеся идентификаторы');
   for (const h of d.habits) {
     if (!h || typeof h.id !== 'string' || typeof h.title !== 'string' || typeof h.emoji !== 'string') throw new Error('Некорректная привычка');
     if (h.freq && !(h.freq.type === 'daily' || ((h.freq.type === 'weekly' || h.freq.type === 'monthly') && Number.isFinite(h.freq.times) && h.freq.times >= 1))) throw new Error('Некорректная частота');
@@ -41,8 +42,7 @@ export function migrateLegacy(entries: Record<string, string>): PlannerData {
     for (const [id, revisions] of Object.entries(result.habits)) {
       const last = revisions.at(-1);
       if (last && !data.habits.some(h => h.id === id)) {
-        const [y, m] = month.split('-').map(Number);
-        revisions.push({ from: `${month}-01`, habit: { ...last.habit, endDate: dateKey(new Date(y ?? 2026, (m ?? 1) - 1, 0)) } });
+        revisions.push({ from: `${month}-01`, habit: last.habit, ended: true });
       }
     }
     for (const habit of data.habits) {
@@ -84,13 +84,14 @@ export function monthData(planner: PlannerData, year: number, month: number): Mo
   const key = monthKey(year, month);
   const end = dateKey(new Date(year, month + 1, 0));
   const habits = Object.values(planner.habits).flatMap(revisions => {
-    const h = revisions.filter(r => r.from <= end).sort((a, b) => a.from.localeCompare(b.from)).at(-1)?.habit;
+    const revision = revisions.filter(r => r.from <= end).sort((a, b) => a.from.localeCompare(b.from)).at(-1);
+    const h = revision?.ended ? undefined : revision?.habit;
     return h && Array.from({ length: new Date(year, month + 1, 0).getDate() }, (_, i) => i + 1).some(d => isActive(h, year, month, d)) ? [h] : [];
   });
   return { habits, goals: planner.months[key]?.goals ?? [], checks: planner.months[key]?.checks ?? {} };
 }
 
-export function putHabit(planner: PlannerData, habit: Habit, from: string): PlannerData {
+export function putHabit(planner: PlannerData, habit: Habit, from: string, ended = false): PlannerData {
   const revisions = (planner.habits[habit.id] ?? []).filter(r => r.from !== from);
-  return { ...planner, habits: { ...planner.habits, [habit.id]: [...revisions, { from, habit }].sort((a, b) => a.from.localeCompare(b.from)) } };
+  return { ...planner, habits: { ...planner.habits, [habit.id]: [...revisions, { from, habit, ended }].sort((a, b) => a.from.localeCompare(b.from)) } };
 }

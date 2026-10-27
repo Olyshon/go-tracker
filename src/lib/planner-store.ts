@@ -94,7 +94,7 @@ export function useMonthData(year: number, month: number) {
   // Ending replaces destructive deletion; earlier revisions and all checks remain intact.
   const removeHabit = (id: string) => commit(p => {
     const old = monthData(p, year, month).habits.find(h => h.id === id);
-    return old ? putHabit(p, { ...old, endDate: dateKey(new Date(year, month, 0)) }, `${key}-01`) : p;
+    return old ? putHabit(p, old, `${key}-01`, true) : p;
   });
   const addGoal = (title: string) => changeMonth(d => ({ ...d, goals: [...d.goals, { id: uid(), title, done: false }] }));
   const updateGoal = (id: string, title: string) => changeMonth(d => ({ ...d, goals: d.goals.map(g => g.id === id ? { ...g, title } : g) }));
