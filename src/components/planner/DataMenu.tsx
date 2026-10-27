@@ -27,6 +27,7 @@ type Props = {
 
 export function DataMenu({ data, fileLabel, onImport, onReset }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const exportJson = () => {
@@ -34,7 +35,7 @@ export function DataMenu({ data, fileLabel, onImport, onReset }: Props) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `planner-go-${fileLabel}.json`;
+    a.download = `go-tracker-${fileLabel}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -43,13 +44,15 @@ export function DataMenu({ data, fileLabel, onImport, onReset }: Props) {
     try {
       const parsed = JSON.parse(await file.text()) as MonthData;
       onImport(parsed);
+      setError("");
     } catch {
-      /* игнорируем некорректный файл */
+      setError("Не удалось импортировать файл. Проверьте формат; сохранённые данные не изменены.");
     }
   };
 
   return (
     <>
+      {error && <p role="alert" className="max-w-64 text-xs text-destructive">{error}</p>}
       <input
         ref={fileRef}
         type="file"
