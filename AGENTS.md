@@ -8,3 +8,7 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Store dated habit revisions in a versioned localStorage registry; keep goals and checks keyed by month and retain untouched legacy keys plus raw migration backups to protect user history.
+- Apply habit edits at the selected month's first day; terminate habits instead of deleting revisions so past schedules and completion records remain available.
+- Keep date-range helpers browser-safe and shared by the tracker and calculations so inactive dates use one inclusive rule.
