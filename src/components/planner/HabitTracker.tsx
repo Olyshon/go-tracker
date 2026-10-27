@@ -1,3 +1,6 @@
+import { HabitDatePicker } from './HabitDatePicker';
+import { Button } from '@/components/ui/button';
+import { dateKey, isActive } from '@/lib/habit-dates';
 import { useState } from "react";
 import { Check, Pencil, Plus, X } from "lucide-react";
 import type { Habit, HabitFrequency } from "@/lib/planner-store";
@@ -23,8 +26,8 @@ type Props = {
   year: number;
   month: number;
   onToggle: (habitId: string, day: number) => void;
-  onAdd: (title: string, emoji: string, freq: HabitFrequency) => void;
-  onUpdate: (id: string, title: string, emoji: string, freq: HabitFrequency) => void;
+  onAdd: (title: string, emoji: string, freq: HabitFrequency, startDate?: string, endDate?: string) => void;
+  onUpdate: (id: string, title: string, emoji: string, freq: HabitFrequency, startDate?: string, endDate?: string) => void;
   onRemove: (id: string) => void;
 };
 
@@ -44,7 +47,7 @@ export function HabitTracker({
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form || !form.title.trim()) return;
+    if (!form || !form.title.trim() || (form.endDate && form.endDate < form.startDate)) return;
     const emoji = form.emoji.trim() || "•";
     const freq: HabitFrequency =
       form.type === "daily"
@@ -52,8 +55,8 @@ export function HabitTracker({
         : form.type === "weekly"
           ? { type: "weekly", times: clamp(form.times, 1, 7), days: [...form.days].sort() }
           : { type: "monthly", times: clamp(form.times, 1, 31) };
-    if (form.id) onUpdate(form.id, form.title.trim(), emoji, freq);
-    else onAdd(form.title.trim(), emoji, freq);
+    if (form.id) onUpdate(form.id, form.title.trim(), emoji, freq, form.startDate, form.endDate);
+    else onAdd(form.title.trim(), emoji, freq, form.startDate, form.endDate);
     setForm(null);
   };
 
@@ -62,13 +65,13 @@ export function HabitTracker({
       <div className="p-4 pb-2">
         <SectionTitle
           right={
-            <button
+            <Button variant="ghost"
               type="button"
               onClick={() => setForm(newForm())}
               className="inline-flex shrink-0 items-center gap-1 rounded-md border border-border px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-olive hover:text-olive"
             >
               <Plus className="size-3.5" /> Добавить привычку
-            </button>
+            </Button>
           }
         >
           Трекер продуктивности
@@ -115,7 +118,7 @@ export function HabitTracker({
           <tbody>
             {habits.map((h) => {
               const done = checks[h.id] ?? [];
-              const doneCount = done.length;
+              const doneCount = done.filter(d => d <= availableDays && isActive(h, year, month, d)).length;
               const { pct } = habitProgress(h, done, year, month, days.length, availableDays);
               const f = freqOf(h);
               return (
@@ -134,28 +137,29 @@ export function HabitTracker({
                         )}
                       </span>
                       <span className="flex shrink-0 items-center gap-0.5">
-                        <button
+                        <Button variant="ghost"
                           type="button"
                           aria-label="Переименовать привычку"
                           onClick={() => setForm(formFrom(h))}
                           className="rounded p-1 text-muted-foreground opacity-0 transition hover:text-foreground group-hover/row:opacity-100 focus:opacity-100"
                         >
                           <Pencil className="size-3" />
-                        </button>
-                        <button
+                        </Button>
+                        <Button variant="ghost"
                           type="button"
-                          aria-label="Удалить привычку"
-                          onClick={() => onRemove(h.id)}
+                          aria-label="Завершить привычку с этого месяца"
+                          onClick={() => { if (window.confirm("Завершить привычку с начала выбранного месяца? История предыдущих месяцев сохранится.")) onRemove(h.id); }}
                           className="rounded p-1 text-muted-foreground opacity-0 transition hover:text-destructive group-hover/row:opacity-100 focus:opacity-100"
                         >
                           <X className="size-3" />
-                        </button>
+                        </Button>
                       </span>
                     </div>
                   </td>
                   {days.map((d) => {
                     const active = done.includes(d.day);
-                    const planned = isPlanned(h, d.weekday);
+                    const applicable = isActive(h, year, month, d.day);
+                    const planned = applicable && isPlanned(h, d.weekday);
                     const missed = planned && !active && !d.isFuture && !d.isToday;
                     return (
                       <td
@@ -167,12 +171,13 @@ export function HabitTracker({
                           d.isFuture && !planned && "opacity-45",
                         )}
                       >
-                        <button
+                        <Button variant="ghost"
                           type="button"
                           aria-label={`${h.title}, день ${d.day}${planned ? " (запланировано)" : ""}`}
                           aria-pressed={active}
+                          disabled={!applicable}
                           onClick={() => onToggle(h.id, d.day)}
-                          className="grid h-7 w-full place-items-center"
+                          className="grid h-7 w-full place-items-center rounded-none p-0 disabled:opacity-20"
                         >
                           <span
                             className={cn(
@@ -191,7 +196,7 @@ export function HabitTracker({
                               <Check className="size-3" strokeWidth={2} />
                             ) : null}
                           </span>
-                        </button>
+                        </Button>
                       </td>
                     );
                   })}
@@ -215,9 +220,7 @@ export function HabitTracker({
           </tbody>
         </table>
       </div>
-      <p className="px-4 py-2 text-[11px] text-muted-foreground">
-        Серая галочка — запланировано, пунктир — пропущено. Отмечать можно любой день.
-      </p>
+      {!habits.length && <p className="px-4 py-4 text-sm text-muted-foreground">Пока нет активных привычек. Начнём с одной?</p>}
     </Panel>
   );
 }
@@ -234,12 +237,16 @@ type FormState = {
   type: HabitFrequency["type"];
   times: number;
   days: number[];
+  startDate: string;
+  endDate?: string | undefined;
 };
 
-const newForm = (): FormState => ({ id: null, title: "", emoji: "", type: "daily", times: 3, days: [] });
+const newForm = (): FormState => ({ id: null, title: "", emoji: "", type: "daily", times: 3, days: [], startDate: dateKey(new Date()) });
 const formFrom = (h: Habit): FormState => {
   const f = freqOf(h);
   return {
+    startDate: h.startDate ?? dateKey(new Date()),
+    endDate: h.endDate,
     id: h.id,
     title: h.title,
     emoji: h.emoji,
@@ -279,7 +286,7 @@ function HabitForm({
       </div>
       <div className="flex flex-wrap gap-1">
         {EMOJIS.map((em) => (
-          <button
+          <Button variant="ghost"
             key={em}
             type="button"
             onClick={() => setForm({ ...form, emoji: em })}
@@ -289,7 +296,7 @@ function HabitForm({
             )}
           >
             {em}
-          </button>
+          </Button>
         ))}
       </div>
       <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -301,7 +308,7 @@ function HabitForm({
             ["monthly", "Раз в месяц"],
           ] as const
         ).map(([t, label]) => (
-          <button
+          <Button variant="ghost"
             key={t}
             type="button"
             onClick={() =>
@@ -313,7 +320,7 @@ function HabitForm({
             )}
           >
             {t === "daily" ? label : label.replace("Раз", "N раз")}
-          </button>
+          </Button>
         ))}
         {form.type !== "daily" && (
           <label className="flex items-center gap-1.5 text-muted-foreground">
@@ -335,7 +342,7 @@ function HabitForm({
           {WEEK_ORDER.map((wd) => {
             const on = form.days.includes(wd);
             return (
-              <button
+              <Button variant="ghost"
                 key={wd}
                 type="button"
                 aria-pressed={on}
@@ -348,23 +355,29 @@ function HabitForm({
                 )}
               >
                 {WEEKDAYS_RU[wd]}
-              </button>
+              </Button>
             );
           })}
           <span className="ml-1 text-[11px] text-muted-foreground">необязательно</span>
         </div>
       )}
+      <div className="flex flex-wrap gap-3">
+        <HabitDatePicker label="Дата начала" value={form.startDate} onChange={d => { if (d) setForm({ ...form, startDate: d }); }} />
+        <HabitDatePicker label="Дата окончания" value={form.endDate} optional onChange={d => setForm({ ...form, endDate: d })} />
+      </div>
+      {form.id && <label className="flex items-center gap-2 text-xs text-muted-foreground"><input type="checkbox" checked readOnly />Применить изменения с выбранного месяца</label>}
+      {form.endDate && form.endDate < form.startDate && <p role="alert" className="text-xs text-destructive">Дата окончания не может быть раньше начала.</p>}
       <div className="flex gap-2">
-        <button type="submit" className="rounded-md bg-olive px-3 py-1.5 text-xs text-primary-foreground">
+        <Button variant="ghost" type="submit" disabled={!!form.endDate && form.endDate < form.startDate} className="rounded-md bg-olive px-3 py-1.5 text-xs text-primary-foreground">
           {form.id ? "Сохранить" : "Добавить"}
-        </button>
-        <button
+        </Button>
+        <Button variant="ghost"
           type="button"
           onClick={() => setForm(null)}
           className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground"
         >
           Отмена
-        </button>
+        </Button>
       </div>
     </form>
   );

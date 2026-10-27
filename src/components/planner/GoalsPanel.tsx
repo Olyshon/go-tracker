@@ -21,6 +21,7 @@ export function GoalsPanel({ goals, onToggle, onAdd, onUpdate, onRemove }: Props
   return (
     <Panel className="p-4">
       <SectionTitle>Цели месяца</SectionTitle>
+      {!goals.length && <p className="py-2 text-sm text-muted-foreground">Новый месяц — новые цели.</p>}
       <ol>
         {goals.map((g, i) => (
           <li

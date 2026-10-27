@@ -12,13 +12,13 @@ import { dayScore, habitProgress } from "@/lib/habit-progress";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Планер GO — трекер привычек и целей на месяц" },
+      { title: "GO Tracker — трекер привычек и целей на месяц" },
       {
         name: "description",
         content:
-          "Планер GO — элегантный месячный планер: цели месяца, трекер привычек по дням, графики продуктивности и общий прогресс.",
+          "GO Tracker — элегантный месячный планер: цели месяца, трекер привычек по дням, графики продуктивности и общий прогресс.",
       },
-      { property: "og:title", content: "Планер GO — трекер привычек и целей" },
+      { property: "og:title", content: "GO Tracker — трекер привычек и целей" },
       {
         property: "og:description",
         content: "Месячный планер с трекером привычек, целями и графиками продуктивности.",
@@ -100,7 +100,7 @@ function PlannerPage() {
     () =>
       days.map((d) => {
         if (d.isFuture || !habitCount) return { day: d.day, value: 0 };
-        return { day: d.day, value: dayScore(data.habits, data.checks, d.day, d.weekday) };
+        return { day: d.day, value: dayScore(data.habits, data.checks, d.day, d.weekday, cursor.year, cursor.month) };
       }),
     [days, data.habits, data.checks, habitCount],
   );
@@ -131,8 +131,9 @@ function PlannerPage() {
         <header className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3">
           <div className="min-w-0">
             <p className="text-[11px] uppercase tracking-[0.35em] text-muted-foreground">
-              Планер GO
+              GO Tracker
             </p>
+            <p className="text-xs text-muted-foreground">Трекер привычек и целей</p>
             <div className="mt-1 flex items-center gap-2">
               <button
                 type="button"
@@ -175,6 +176,7 @@ function PlannerPage() {
           </div>
         </header>
 
+        {store.error && <p role="alert" className="text-sm text-destructive">{store.error}</p>}
         <div className="grid gap-3 sm:grid-cols-3">
           <KpiBlock
             label="Выполненные цели"
