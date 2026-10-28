@@ -15,7 +15,7 @@ export function HabitDatePicker({ label, value, onChange, optional = false }: { 
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild><Button variant="outline" size="sm" aria-label={label} className="font-normal shadow-none"><CalendarIcon />{date ? format(date, 'dd.MM.yyyy') : 'Без окончания'}</Button></PopoverTrigger>
       <PopoverContent align="start" className="w-auto p-0">
-        <Calendar mode="single" selected={date} {...(date ? { defaultMonth: date } : {})} locale={ru} className="pointer-events-auto" onSelect={d => { if (d) { onChange(dateKey(d)); setOpen(false); } }} />
+        <Calendar mode="single" selected={date} {...(date ? { defaultMonth: date } : {})} locale={ru} labels={{ labelNext: () => 'Следующий месяц', labelPrevious: () => 'Предыдущий месяц', labelDayButton: (d, modifiers) => `${modifiers['today'] ? 'Сегодня, ' : ''}${format(d, 'PPPP', { locale: ru })}` }} className="pointer-events-auto" onSelect={d => { if (d) { onChange(dateKey(d)); setOpen(false); } }} />
         {optional && <Button variant="ghost" size="sm" className="w-full" onClick={() => { onChange(undefined); setOpen(false); }}>Без окончания</Button>}
       </PopoverContent>
     </Popover>
