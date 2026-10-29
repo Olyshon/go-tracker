@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { dateKey, monthKey } from './habit-dates';
-import { emptyPlanner, monthData, putHabit, readPlanner, STORAGE_KEY, validateMonth, type PlannerData } from './planner-persistence';
+import { emptyPlanner, monthData, putHabit, validateMonth, type PlannerData } from './planner-persistence';
+import { PlannerSession } from './planner-session';
 
 export type Goal = { id: string; title: string; done: boolean };
 export type HabitFrequency =
@@ -60,20 +61,66 @@ export function useMonthData(year: number, month: number) {
   const [planner, setPlanner] = useState<PlannerData>(emptyPlanner);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState('');
+  const [blocked, setBlocked] = useState(false);
+  const session = useRef<PlannerSession | null>(null);
   useEffect(() => {
-    try { setPlanner(readPlanner(window.localStorage)); setLoaded(true); }
-    catch { setError('Не удалось безопасно прочитать данные. Исходные записи сохранены; изменения заблокированы.'); }
+    let active = true;
+    let current: PlannerSession;
+    try {
+      current = new PlannerSession(window.localStorage, navigator.locks);
+      session.current = current;
+    } catch {
+      setError('Не удалось безопасно прочитать данные. Исходные записи сохранены; изменения заблокированы.');
+      setBlocked(true);
+      return;
+    }
+    void current.initialize().then(result => {
+      if (!active) return;
+      setPlanner(result.planner);
+      setError(result.error);
+      setBlocked(Boolean(result.error));
+      setLoaded(true);
+    }).catch(() => {
+      if (!active) return;
+      setError('Не удалось безопасно прочитать данные. Исходные записи сохранены; изменения заблокированы.');
+      setBlocked(true);
+    });
+    const check = () => {
+      if (!active) return;
+      try {
+        const conflict = current.checkForConflict();
+        if (conflict) { setError(conflict); setBlocked(true); }
+      } catch {
+        setError('Не удалось проверить сохранённые данные. Обновите страницу.');
+        setBlocked(true);
+      }
+    };
+    window.addEventListener('storage', check);
+    window.addEventListener('focus', check);
+    document.addEventListener('visibilitychange', check);
+    return () => {
+      active = false;
+      window.removeEventListener('storage', check);
+      window.removeEventListener('focus', check);
+      document.removeEventListener('visibilitychange', check);
+      if (session.current === current) session.current = null;
+    };
   }, []);
   const data = useMemo(() => monthData(planner, year, month), [planner, year, month]);
   const key = monthKey(year, month);
   const commit = useCallback((change: (p: PlannerData) => PlannerData) => {
-    if (!loaded) return;
-    setPlanner(p => {
-      const next = change(p);
-      try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); setError(''); return next; }
-      catch { setError('Не удалось сохранить изменения. Освободите место в браузере и попробуйте снова.'); return p; }
+    const current = session.current;
+    if (!loaded || blocked || !current) return;
+    void current.commit(change).then(next => {
+      if (session.current !== current) return;
+      setPlanner(next);
+    }).catch((cause: unknown) => {
+      if (session.current !== current) return;
+      const conflict = current.checkForConflict();
+      if (conflict) { setError(conflict); setBlocked(true); }
+      else setError(cause instanceof Error && cause.message === 'Данные ещё не загружены.' ? cause.message : 'Не удалось сохранить изменения. Освободите место в браузере и попробуйте снова.');
     });
-  }, [loaded]);
+  }, [loaded, blocked]);
   const changeMonth = useCallback((change: (d: MonthData) => MonthData) => commit(p => {
     const next = change(monthData(p, year, month));
     return { ...p, months: { ...p.months, [key]: { goals: next.goals, checks: next.checks } } };
@@ -109,5 +156,5 @@ export function useMonthData(year: number, month: number) {
     });
   };
   const resetProgress = () => changeMonth(d => ({ ...d, checks: {}, goals: d.goals.map(g => ({ ...g, done: false })) }));
-  return { data, loaded, error, replaceAll, resetProgress, toggleCheck, addHabit, updateHabit, removeHabit, addGoal, updateGoal, toggleGoal, removeGoal };
+  return { data, loaded, blocked, error, replaceAll, resetProgress, toggleCheck, addHabit, updateHabit, removeHabit, addGoal, updateGoal, toggleGoal, removeGoal };
 }
