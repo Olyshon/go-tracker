@@ -38,17 +38,16 @@ export function migrateLegacy(entries: Record<string, string>): PlannerData {
     const month = key.slice('planner-go:'.length);
     result.legacyBackup[key] = raw;
     result.months[month] = { goals: data.goals, checks: data.checks };
-    // An absence in an existing month is also historical information.
-    for (const [id, revisions] of Object.entries(result.habits)) {
-      const last = revisions.at(-1);
-      if (last && !data.habits.some(h => h.id === id)) {
-        revisions.push({ from: `${month}-01`, habit: last.habit, ended: true });
-      }
-    }
+    // A monthly snapshot's omissions are not explicit terminations.
     for (const habit of data.habits) {
       const revisions = result.habits[habit.id] ?? [];
+      const previous = revisions.at(-1)?.habit;
       const startDate = habit.startDate ?? revisions[0]?.habit.startDate ?? `${month}-01`;
-      revisions.push({ from: `${month}-01`, habit: { ...habit, startDate } });
+      // Old monthly snapshots often contain the original daily defaults. There
+      // is no edit timestamp to justify replacing a configured richer schedule.
+      const freq = previous?.freq && previous.freq.type !== 'daily' && (!habit.freq || habit.freq.type === 'daily')
+        ? previous.freq : habit.freq;
+      revisions.push({ from: `${month}-01`, habit: { ...habit, freq, startDate, endDate: habit.endDate ?? previous?.endDate } });
       result.habits[habit.id] = revisions;
     }
   }
@@ -60,11 +59,19 @@ export function readPlanner(storage: Storage): PlannerData {
   if (existing) {
     const parsed = JSON.parse(existing) as PlannerData;
     if (parsed.version !== 2 || !parsed.habits || !parsed.months || !parsed.legacyBackup) throw new Error('Не удалось прочитать сохранённые данные');
+    if (typeof parsed.habits !== 'object' || Array.isArray(parsed.habits) || typeof parsed.months !== 'object' || Array.isArray(parsed.months) || typeof parsed.legacyBackup !== 'object' || Array.isArray(parsed.legacyBackup)) throw new Error('Некорректный реестр');
     for (const revisions of Object.values(parsed.habits)) {
       if (!Array.isArray(revisions)) throw new Error('Некорректная история привычек');
-      for (const revision of revisions) validateMonth({ habits: [revision.habit], goals: [], checks: {} });
+      for (const revision of revisions) {
+        if (!revision || typeof revision.from !== 'string' || !/^\d{4}-\d{2}-01$/.test(revision.from) || dateKey(new Date(`${revision.from}T12:00:00`)) !== revision.from || (revision.ended !== undefined && typeof revision.ended !== 'boolean')) throw new Error('Некорректная дата изменения');
+        validateMonth({ habits: [revision.habit], goals: [], checks: {} });
+      }
     }
-    for (const month of Object.values(parsed.months)) validateMonth({ habits: [], ...month });
+    for (const [key, month] of Object.entries(parsed.months)) {
+      if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(key)) throw new Error('Некорректный месяц');
+      validateMonth({ habits: [], ...month });
+    }
+    if (Object.values(parsed.legacyBackup).some(raw => typeof raw !== 'string')) throw new Error('Некорректная резервная копия');
     return parsed;
   }
   const entries: Record<string, string> = {};

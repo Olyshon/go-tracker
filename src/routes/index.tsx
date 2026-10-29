@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
+import { Button } from '@/components/ui/button';
 import { DataMenu } from "@/components/planner/DataMenu";
 import { GoalsPanel } from "@/components/planner/GoalsPanel";
 import { HabitTracker } from "@/components/planner/HabitTracker";
@@ -172,11 +173,15 @@ function PlannerPage() {
               fileLabel={`${cursor.year}-${String(cursor.month + 1).padStart(2, "0")}`}
               onImport={store.replaceAll}
               onReset={store.resetProgress}
+              readOnly={!store.loaded || store.blocked}
             />
           </div>
         </header>
 
-        {store.error && <p role="alert" className="text-sm text-destructive">{store.error}</p>}
+        {store.error && <div role="alert" className="flex flex-wrap items-center gap-2 text-sm text-destructive">
+          <p>{store.error}</p>
+          {store.blocked && <Button variant="outline" size="sm" onClick={() => window.location.reload()}><RotateCcw />Обновить страницу</Button>}
+        </div>}
         <div className="grid gap-3 sm:grid-cols-3">
           <KpiBlock
             label="Выполненные цели"
@@ -192,6 +197,7 @@ function PlannerPage() {
           <KpiBlock label="Общий прогресс" value={`${overall}%`} percent={overall} />
         </div>
 
+        <fieldset disabled={!store.loaded || store.blocked} className="min-w-0 space-y-3 border-0 p-0">
         <div className="grid gap-3 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)_minmax(0,18rem)]">
           <GoalsPanel
             goals={data.goals}
@@ -216,6 +222,7 @@ function PlannerPage() {
           onUpdate={store.updateHabit}
           onRemove={store.removeHabit}
         />
+        </fieldset>
       </div>
     </main>
   );

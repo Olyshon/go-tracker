@@ -23,9 +23,10 @@ type Props = {
   fileLabel: string;
   onImport: (data: MonthData) => void;
   onReset: () => void;
+  readOnly?: boolean;
 };
 
-export function DataMenu({ data, fileLabel, onImport, onReset }: Props) {
+export function DataMenu({ data, fileLabel, onImport, onReset, readOnly = false }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -78,11 +79,12 @@ export function DataMenu({ data, fileLabel, onImport, onReset }: Props) {
           <DropdownMenuItem onSelect={exportJson}>
             <Download className="size-4" /> Экспорт данных месяца
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => fileRef.current?.click()}>
+          <DropdownMenuItem disabled={readOnly} onSelect={() => fileRef.current?.click()}>
             <Upload className="size-4" /> Импорт из JSON
           </DropdownMenuItem>
           <DropdownMenuItem
             className="text-destructive focus:text-destructive"
+            disabled={readOnly}
             onSelect={() => setConfirmOpen(true)}
           >
             <RotateCcw className="size-4" /> Сброс прогресса
@@ -102,6 +104,7 @@ export function DataMenu({ data, fileLabel, onImport, onReset }: Props) {
           <AlertDialogFooter>
             <AlertDialogCancel>Отмена</AlertDialogCancel>
             <AlertDialogAction
+              disabled={readOnly}
               onClick={() => {
                 onReset();
                 setConfirmOpen(false);
