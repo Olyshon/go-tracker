@@ -160,7 +160,6 @@ export function HabitTracker({
                     const active = done.includes(d.day);
                     const applicable = isActive(h, year, month, d.day);
                     const planned = applicable && isPlanned(h, d.weekday);
-                    const missed = planned && !active && !d.isFuture && !d.isToday;
                     return (
                       <td
                         key={d.day}
@@ -185,16 +184,13 @@ export function HabitTracker({
                               active
                                 ? "border-olive bg-olive text-primary-foreground"
                                 : planned
-                                  ? "border-border-strong bg-muted/60 text-muted-foreground/50 hover:border-olive hover:bg-olive-faint"
-                                  : "border-border bg-background hover:border-olive hover:bg-olive-faint",
-                              missed && "border-dashed border-destructive/30 bg-background text-transparent",
+                                  ? d.isFuture
+                                    ? "border-olive/40 bg-olive-faint/50"
+                                    : "border-olive/60 bg-olive-faint hover:border-olive"
+                                  : "border-border bg-background hover:border-olive/50 hover:bg-olive-faint/50",
                             )}
                           >
-                            {active ? (
-                              <Check className="size-3" strokeWidth={3} />
-                            ) : planned ? (
-                              <Check className="size-3" strokeWidth={2} />
-                            ) : null}
+                            {active && <Check className="size-3" strokeWidth={3} />}
                           </span>
                         </Button>
                       </td>
