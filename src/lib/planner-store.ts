@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { dateKey, monthKey } from './habit-dates';
 import { emptyPlanner, monthData, putHabit, validateMonth, type PlannerData } from './planner-persistence';
-import { PlannerSession } from './planner-session';
+import { PlannerCloudSession } from './planner-cloud-session';
 
 export type Goal = { id: string; title: string; done: boolean };
 export type HabitFrequency =
@@ -62,12 +62,12 @@ export function useMonthData(year: number, month: number) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState('');
   const [blocked, setBlocked] = useState(false);
-  const session = useRef<PlannerSession | null>(null);
+  const session = useRef<PlannerCloudSession | null>(null);
   useEffect(() => {
     let active = true;
-    let current: PlannerSession;
+    let current: PlannerCloudSession;
     try {
-      current = new PlannerSession(window.localStorage, navigator.locks);
+      current = new PlannerCloudSession();
       session.current = current;
     } catch {
       setError('Не удалось безопасно прочитать данные. Исходные записи сохранены; изменения заблокированы.');
