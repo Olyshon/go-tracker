@@ -14,13 +14,143 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      habit_completions: {
+        Row: {
+          completed_on: string
+          habit_id: string
+          user_id: string
+        }
+        Insert: {
+          completed_on: string
+          habit_id: string
+          user_id: string
+        }
+        Update: {
+          completed_on?: string
+          habit_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habit_completions_user_id_habit_id_fkey"
+            columns: ["user_id", "habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["user_id", "id"]
+          },
+        ]
+      }
+      habit_revisions: {
+        Row: {
+          effective_from: string
+          emoji: string
+          end_date: string | null
+          ended: boolean
+          frequency: Json
+          habit_id: string
+          start_date: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          effective_from: string
+          emoji: string
+          end_date?: string | null
+          ended?: boolean
+          frequency?: Json
+          habit_id: string
+          start_date?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          effective_from?: string
+          emoji?: string
+          end_date?: string | null
+          ended?: boolean
+          frequency?: Json
+          habit_id?: string
+          start_date?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habit_revisions_user_id_habit_id_fkey"
+            columns: ["user_id", "habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["user_id", "id"]
+          },
+        ]
+      }
+      habits: {
+        Row: {
+          id: string
+          user_id: string
+        }
+        Insert: {
+          id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      monthly_goals: {
+        Row: {
+          done: boolean
+          id: string
+          month: string
+          position: number
+          title: string
+          user_id: string
+        }
+        Insert: {
+          done?: boolean
+          id: string
+          month: string
+          position?: number
+          title: string
+          user_id: string
+        }
+        Update: {
+          done?: boolean
+          id?: string
+          month?: string
+          position?: number
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tracker_versions: {
+        Row: {
+          revision: number
+          user_id: string
+        }
+        Insert: {
+          revision?: number
+          user_id: string
+        }
+        Update: {
+          revision?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      read_tracker: { Args: never; Returns: Json }
+      save_tracker: {
+        Args: { expected_revision: number; payload: Json }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never

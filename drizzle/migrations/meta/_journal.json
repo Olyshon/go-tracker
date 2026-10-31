@@ -1,5 +1,13 @@
 {
   "version": "7",
   "dialect": "postgresql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1793458529164,
+      "tag": "0000_tracker_accounts_persistence",
+      "breakpoints": true
+    }
+  ]
 }
