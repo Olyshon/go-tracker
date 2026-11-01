@@ -8,6 +8,13 @@
       "when": 1793458529164,
       "tag": "0000_tracker_accounts_persistence",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793522313324,
+      "tag": "0001_tracker_account_transition_guard",
+      "breakpoints": true
     }
   ]
 }
