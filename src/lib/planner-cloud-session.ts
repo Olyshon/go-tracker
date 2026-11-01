@@ -7,10 +7,14 @@ import { CONFLICT_MESSAGE } from './planner-session';
 export class PlannerCloudSession {
   private planner: PlannerData | undefined;
   private revision = 0;
+  private userId = '';
   private blocked = '';
   private queue: Promise<unknown> = Promise.resolve();
 
   async initialize() {
+    const { data: auth, error: authError } = await supabase.auth.getUser();
+    if (authError || !auth.user) throw new Error('Необходимо войти в аккаунт.');
+    this.userId = auth.user.id;
     const { data, error } = await supabase.rpc('read_tracker');
     if (error) throw error;
     const rows = data as unknown as TrackerRows;
@@ -29,7 +33,7 @@ export class PlannerCloudSession {
       validatePlannerForDatabase(next);
       const { data, error } = await supabase.rpc('save_tracker', {
         expected_revision: this.revision,
-        payload: JSON.parse(JSON.stringify(next)) as Json,
+        payload: JSON.parse(JSON.stringify({ ...next, userId: this.userId })) as Json,
       });
       if (error) {
         // A failed network response could hide a committed transaction. Block

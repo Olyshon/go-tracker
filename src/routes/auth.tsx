@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useNavigate, useHydrated } from '@tanstack/react-router';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,7 @@ export const Route = createFileRoute('/auth')({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const hydrated = useHydrated();
   const [signup, setSignup] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -55,12 +56,12 @@ function AuthPage() {
       <div><h1 className="font-display text-3xl font-semibold">GO Tracker</h1><p className="text-sm text-muted-foreground">Трекер привычек и целей</p></div>
       <form onSubmit={submit} className="space-y-4">
         <h2 className="font-display text-2xl">{signup ? 'Регистрация' : 'Вход'}</h2>
-        <label className="block space-y-2 text-sm">Почта<Input type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} /></label>
-        <label className="block space-y-2 text-sm">Пароль<Input type="password" minLength={6} autoComplete={signup ? 'new-password' : 'current-password'} required value={password} onChange={e => setPassword(e.target.value)} /></label>
+        <label className="block space-y-2 text-sm">Почта<Input disabled={!hydrated || busy} type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} /></label>
+        <label className="block space-y-2 text-sm">Пароль<Input disabled={!hydrated || busy} type="password" minLength={6} autoComplete={signup ? 'new-password' : 'current-password'} required value={password} onChange={e => setPassword(e.target.value)} /></label>
         {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
         {notice && <p role="status" className="text-sm text-muted-foreground">{notice}</p>}
-        <Button type="submit" className="w-full" disabled={busy}>{busy ? 'Подождите…' : signup ? 'Создать аккаунт' : 'Войти'}</Button>
-        <Button type="button" variant="link" className="w-full" disabled={busy} onClick={() => { setSignup(!signup); setError(''); setNotice(''); }}>{signup ? 'Уже есть аккаунт? Войти' : 'Создать аккаунт'}</Button>
+        <Button type="submit" className="w-full" disabled={!hydrated || busy}>{busy ? 'Подождите…' : signup ? 'Создать аккаунт' : 'Войти'}</Button>
+        <Button type="button" variant="link" className="w-full" disabled={!hydrated || busy} onClick={() => { setSignup(!signup); setError(''); setNotice(''); }}>{signup ? 'Уже есть аккаунт? Войти' : 'Создать аккаунт'}</Button>
       </form>
     </section>
   </main>;
