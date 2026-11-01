@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { Button } from '@/components/ui/button';
+import { AccountButton } from "@/components/planner/AccountButton";
 import { DataMenu } from "@/components/planner/DataMenu";
 import { GoalsPanel } from "@/components/planner/GoalsPanel";
 import { HabitTracker } from "@/components/planner/HabitTracker";
@@ -10,7 +11,7 @@ import { Bar, Panel } from "@/components/planner/ui-bits";
 import { MONTHS_RU, daysInMonth, useMonthData } from "@/lib/planner-store";
 import { dayScore, habitProgress } from "@/lib/habit-progress";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
       { title: "GO Tracker — трекер привычек и целей на месяц" },
@@ -168,6 +169,7 @@ function PlannerPage() {
                 Текущий месяц
               </button>
             )}
+            <AccountButton />
             <DataMenu
               data={data}
               fileLabel={`${cursor.year}-${String(cursor.month + 1).padStart(2, "0")}`}
