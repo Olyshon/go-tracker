@@ -3,6 +3,7 @@ import { Check, Pencil, Plus, X } from "lucide-react";
 import type { Goal } from "@/lib/planner-store";
 import { Panel, SectionTitle } from "./ui-bits";
 import { cn } from "@/lib/utils";
+import { DeleteConfirmation } from './DeleteConfirmation';
 
 type Props = {
   goals: Goal[];
@@ -17,6 +18,7 @@ export function GoalsPanel({ goals, onToggle, onAdd, onUpdate, onRemove }: Props
   const [draft, setDraft] = useState("");
   const [adding, setAdding] = useState(false);
   const [newTitle, setNewTitle] = useState("");
+  const [removing, setRemoving] = useState<Goal | null>(null);
 
   return (
     <Panel className="p-4">
@@ -73,7 +75,7 @@ export function GoalsPanel({ goals, onToggle, onAdd, onUpdate, onRemove }: Props
               <button
                 type="button"
                 aria-label="Удалить цель"
-                onClick={() => onRemove(g.id)}
+                onClick={() => setRemoving(g)}
                 className="rounded p-1 text-muted-foreground opacity-0 transition hover:text-destructive group-hover:opacity-100 focus:opacity-100"
               >
                 <X className="size-3.5" />
@@ -130,6 +132,10 @@ export function GoalsPanel({ goals, onToggle, onAdd, onUpdate, onRemove }: Props
           <Plus className="size-3.5" /> Добавить цель
         </button>
       )}
+      <DeleteConfirmation name={removing?.title ?? null}
+        description="Цель и её статус выполнения будут удалены из выбранного месяца. Действие нельзя отменить."
+        onCancel={() => setRemoving(null)}
+        onConfirm={() => { if (removing) onRemove(removing.id); setRemoving(null); }} />
     </Panel>
   );
 }
