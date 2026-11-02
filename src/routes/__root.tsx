@@ -13,6 +13,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from '@/integrations/supabase/client';
+import { setRecoveryUser } from '@/lib/auth-ux';
 
 function NotFoundComponent() {
   return (
@@ -125,9 +126,15 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(event => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setRecoveryUser(session?.user.id ?? null);
+        if (router.state.location.pathname !== '/reset-password') void router.navigate({ to: '/reset-password', replace: true });
+        return;
+      }
       if (event !== 'SIGNED_IN' && event !== 'SIGNED_OUT' && event !== 'USER_UPDATED') return;
       if (event === 'SIGNED_OUT') {
+        setRecoveryUser(null);
         queryClient.clear();
         void router.navigate({ to: '/auth', replace: true });
       } else {
