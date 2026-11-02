@@ -1,7 +1,7 @@
 # GO Tracker
-- [ ] Add email/password signup, login and logout with Lovable Cloud.
-- [ ] Replace authenticated tracker storage with user-isolated database tables while preserving dated history and legacy browser records.
-- [ ] Verify persistence, historical schedules, monthly goals, account isolation and unchanged UI; report limitations.
+- [x] Add email/password signup, login and logout with Lovable Cloud; email confirmation remains enabled.
+- [x] Replace authenticated tracker storage with user-isolated database tables while preserving dated history and legacy browser records.
+- [x] Verify persistence, historical schedules, monthly goals, account isolation and unchanged UI: 41 tests pass; real two-account browser flow and RLS probes pass. Signup rejects reserved test addresses; real confirmation-email delivery and published deployment remain unverified.
 - [x] Prevent stale-tab writes with exclusive browser locks and storage snapshot checks; conflicts block edits until reload.
 - [x] Make fresh legacy migration non-destructive and detect late legacy changes without automatic merging; existing registries remain untouched on initialization.
 - [x] Verify persistence, continuity, history and conflicts: all 33 tests pass; isolated browser save/navigation/reload, two-tab conflict/recovery and late legacy blocking pass without page errors. Personal browser data not accessed.
