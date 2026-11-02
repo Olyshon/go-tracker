@@ -8,6 +8,7 @@ import { freqLabel, freqOf, habitProgress, isPlanned } from "@/lib/habit-progres
 import { WEEKDAYS_RU } from "@/lib/planner-store";
 import { cn } from "@/lib/utils";
 import { Panel, SectionTitle } from "./ui-bits";
+import { DeleteConfirmation } from './DeleteConfirmation';
 
 type DayInfo = {
   day: number;
@@ -44,6 +45,7 @@ export function HabitTracker({
   onRemove,
 }: Props) {
   const [form, setForm] = useState<FormState | null>(null);
+  const [removing, setRemoving] = useState<Habit | null>(null);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,7 +150,7 @@ export function HabitTracker({
                         <Button variant="ghost"
                           type="button"
                           aria-label="Завершить привычку с этого месяца"
-                          onClick={() => { if (window.confirm("Завершить привычку с начала выбранного месяца? История предыдущих месяцев сохранится.")) onRemove(h.id); }}
+                          onClick={() => setRemoving(h)}
                           className="rounded p-1 text-muted-foreground opacity-0 transition hover:text-destructive group-hover/row:opacity-100 focus:opacity-100"
                         >
                           <X className="size-3" />
@@ -217,6 +219,10 @@ export function HabitTracker({
         </table>
       </div>
       {!habits.length && <p className="px-4 py-4 text-sm text-muted-foreground">Пока нет активных привычек. Начнём с одной?</p>}
+      <DeleteConfirmation name={removing?.title ?? null}
+        description="Привычка будет завершена с начала выбранного месяца и исчезнет из этого и следующих месяцев. Её история за эти месяцы может стать недоступной на экране. История предыдущих месяцев и сохранённые отметки не удаляются."
+        onCancel={() => setRemoving(null)}
+        onConfirm={() => { if (removing) onRemove(removing.id); setRemoving(null); }} />
     </Panel>
   );
 }
