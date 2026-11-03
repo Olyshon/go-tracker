@@ -1,339 +1,126 @@
-# Go Tracker Olga
+# GO Tracker — трекер привычек и ежемесячных целей
 
-Create a responsive personal monthly productivity and habit tracker web app.
+GO Tracker — веб-приложение для планирования личных целей, формирования привычек и отслеживания прогресса. Приложение объединяет календарный трекер, гибкое расписание привычек, месячные цели и визуальную аналитику выполнения.
 
-The interface language must be Russian.
+Проект разработан как функциональный MVP с использованием AI-assisted development и платформы Lovable.
 
-The app should visually resemble a clean elegant paper planner, but feel like a modern web application.
+[Открыть приложение](https://go-tracker-olga.lovable.app/) · [Исходный код](https://github.com/Olyshon/go-tracker-olga)
 
-Overall visual style
+## Интерфейс приложения
 
-Use:
+На скриншотах представлены демонстрационные данные.
 
-warm off-white / ivory background
+### Октябрь 2026
 
-muted olive-beige accent colors
+Главный экран с заполненными привычками, целями и графиками.
 
-very light gray borders
+![GO Tracker — привычки, цели и аналитика за октябрь 2026](screenshots/october-2026.png)
 
-dark gray text instead of pure black
+### Ноябрь 2026
 
-subtle rounded corners
+Текущий месяц: календарный трекер и прогресс выполнения.
 
-minimal shadows
+![GO Tracker — привычки, цели и аналитика за ноябрь 2026](screenshots/november-2026.png)
 
-calm, elegant, uncluttered design
+## Возможности
 
-desktop-first layout, but responsive
+### Трекер привычек
 
-Avoid:
+- Создание, редактирование и завершение привычек.
+- Настройка периодичности: ежедневно, несколько раз в неделю или месяц.
+- Выбор предпочтительных дней недели.
+- Указание даты начала и окончания привычки.
+- Отметка выполнения в календарной таблице.
+- Автоматический расчёт индивидуального прогресса.
 
-bright colors
+### Работа с историей
 
-gradients
+- Привычки продолжаются в следующих месяцах в пределах периода действия.
+- Изменение расписания применяется с выбранного месяца, не переписывая предыдущие периоды.
+- История выполнения сохраняется при переходе между месяцами.
+- Завершение привычки не требует удаления её прошлых результатов.
 
-heavy shadows
+### Ежемесячные цели
 
-oversized cards
+- Добавление, редактирование и удаление целей.
+- Отметка выполненных целей.
+- Независимое хранение целей для каждого месяца.
+- Подтверждение перед удалением.
 
-overly modern SaaS dashboard aesthetics
+### Аналитика прогресса
 
-The design should feel like a premium digital planner.
+На главном экране отображаются:
 
-Main page layout
+- Процент выполнения привычек.
+- Доля выполненных целей.
+- Общий показатель прогресса.
+- График ежедневной продуктивности.
+- Круговая диаграмма общего прогресса.
 
-Create a monthly dashboard.
+Показатели автоматически пересчитываются при изменении отметок.
 
-1. Month header
+### Пользовательские аккаунты
 
-In the upper-left area display:
+- Регистрация и вход по email.
+- Подтверждение электронной почты.
+- Восстановление пароля через email.
+- Сохранение данных в облачной базе.
+- Разделение данных между пользователями с использованием политик доступа к строкам (RLS).
 
-"Планер GO"
+## Технологический стек
 
-Below it display the current month prominently:
+| Область | Технологии |
+| --- | --- |
+| Frontend | React 19, TypeScript |
+| Маршрутизация | TanStack Router / Start |
+| Стилизация | Tailwind CSS 4 |
+| Компоненты интерфейса | Radix UI |
+| Графики | Recharts |
+| Работа с датами | date-fns |
+| Backend и авторизация | Lovable Cloud, Supabase |
+| База данных | PostgreSQL |
+| Разработка | Lovable, GitHub |
+| Проверки и качество кода | Vitest, ESLint, Prettier |
 
-"Январь"
+## Особенности реализации
 
-Add left and right arrow buttons near the month so the user can switch between months.
+**Гибкая модель привычек.** Приложение учитывает разные типы периодичности, выбранные дни недели и индивидуальные сроки действия привычек.
 
-Also show the year.
+**Сохранение исторических настроек.** Изменение частоты выполнения не должно менять ранее действовавшее расписание. Это позволяет корректно рассчитывать прогресс за прошлые месяцы.
 
-Example:
+**Облачное хранение.** Первоначальная версия использовала localStorage. В дальнейшем приложение было переведено на Lovable Cloud с пользовательской авторизацией и сохранением данных в PostgreSQL.
 
-Планер GO
-‹ Январь 2026 ›
+**Изоляция данных.** Доступ к пользовательским записям ограничивается на уровне базы данных с помощью RLS.
 
-2. Monthly goals
+**Проверка сценариев.** В процессе разработки тестировались сохранение данных, переходы между месяцами, изменения расписаний, регистрация, авторизация и разграничение доступа.
 
-On the left side below the month header create a section:
+## Процесс разработки
 
-"Цели месяца"
+Проект создан с использованием Lovable и AI-инструментов.
 
-Display up to 8 goals.
+Работа включала формулирование требований, проектирование пользовательских сценариев, последовательную реализацию функций, проверку поведения приложения и корректировку решений по результатам тестирования.
 
-Each goal has:
+Особое внимание уделялось сохранности пользовательских данных, корректности расчётов и согласованности поведения приложения при изменении расписаний.
 
-number
+## Локальный запуск
 
-goal title
-
-checkbox
-
-Example:
-
-Достичь дзен
-
-Вести финансовый учёт
-
-Планирование каждого воскресенья
-
-Завершить проект
-
-Защитить таблицу
-
-Убрать тревожность
-
-Allow the user to:
-
-add a goal
-
-edit a goal
-
-delete a goal
-
-mark it as completed
-
-3. KPI progress indicators
-
-Across the upper part of the dashboard create three compact progress blocks:
-
-"Выполненные цели"
-
-"Выполненные привычки"
-
-"Общий прогресс"
-
-Each block should show:
-
-numeric value
-
-horizontal progress bar
-
-percentage
-
-Keep them slim and elegant, similar to progress indicators in a paper planner.
-
-4. Productivity chart
-
-Create a wide chart titled:
-
-"Прогресс продуктивности"
-
-X-axis:
-days of the current month
-
-Y-axis:
-percentage of habits completed on that day
-
-Use a smooth area or line chart with a very subtle muted green fill.
-
-The chart should automatically update when habit checkboxes are changed.
-
-5. Overall monthly progress
-
-To the right of the productivity chart create a donut chart.
-
-In the center display the overall monthly completion percentage.
-
-Example:
-
-54%
-
-Use muted olive/beige for completed progress and very light gray for the remaining area.
-
-6. Habit tracker
-
-This is the main section of the page.
-
-Title:
-
-"Трекер продуктивности"
-
-Create a large table.
-
-Rows = habits.
-
-Columns = calendar days of the selected month.
-
-For every day show:
-
-abbreviated Russian weekday
-
-date number
-
-Example:
-
-чт
-1
-
-пт
-2
-
-сб
-3
-
-вс
-4
-
-etc.
-
-Group days visually by week using slightly stronger vertical separators.
-
-The first column must remain sticky when horizontally scrolling.
-
-Example habits:
-
-Подъём в 7:30 ⏰
-Пробежка 🏃
-Контрастный душ 🚿
-Завтрак 🥣
-Спортзал 💪
-Работа над проектом 🎯
-Отказ от соцсетей 📱
-Ведение бюджета 💰
-Чтение / Обучение 📚
-Планирование недели 📅
-Медитация 🧘
-Ложиться спать до 22:00 🛏️
-
-Every day cell should contain a checkbox-style control.
-
-Clicking the cell toggles the habit between:
-completed
-not completed
-
-Completed cells should use the muted olive accent.
-
-Future dates in the current month should appear visually inactive.
-
-Highlight today's date subtly.
-
-Weekend columns may have a slightly different background.
-
-7. Habit progress
-
-At the right side of each habit row show:
-
-number of completed days
-
-horizontal mini progress bar
-
-completion percentage
-
-Example:
-
-22 ███████░░░ 71%
-
-Calculate these automatically.
-
-8. Habit management
-
-Add a small button:
-
-"+ Добавить привычку"
-
-Allow:
-
-creating habits
-
-renaming habits
-
-deleting habits
-
-adding an emoji/icon
-
-Do not make habit management visually dominant.
-
-9. Calculations
-
-Automatically calculate:
-
-Daily productivity =
-completed habits that day / active habits × 100
-
-Habit progress =
-completed days / available days × 100
-
-Completed goals =
-number of completed monthly goals / total monthly goals
-
-Overall progress =
-average of habit completion percentage and goal completion percentage
-
-10. Data persistence
-
-For the first version, store all data locally in the browser using localStorage.
-
-The user's checked habits, goals and habit names must remain after refreshing the page.
-
-Store data separately for each month and year.
-
-11. Responsive behavior
-
-Desktop:
-show the complete dashboard.
-
-Tablet:
-allow horizontal scrolling for the habit table.
-
-Mobile:
-do not squeeze the entire 31-day table into the screen.
-
-Instead create a usable mobile layout where the user can horizontally scroll the calendar while habit names remain visible.
-
-Important
-
-Focus first on creating a polished functional MVP.
-
-Do not add:
-
-login
-
-user accounts
-
-social features
-
-gamification
-
-notifications
-
-AI functionality
-
-backend database
-
-We will add those later.
-
-Make all buttons and interactions functional, not just visual placeholders.
-
-This project was built with [Lovable](https://lovable.dev).
-
-**Live app**: https://go-tracker-olga.lovable.app
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/8a1b952f-c7a9-41f5-aa23-227f776ab5e7).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+Необходимы Node.js и npm.
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+git clone https://github.com/Olyshon/go-tracker-olga.git
+cd go-tracker-olga
+npm install
 npm run dev
 ```
+
+Для работы с облачными данными требуется конфигурация подключения к соответствующему проекту Lovable Cloud / Supabase.
+
+## Статус проекта
+
+MVP опубликован.
+
+Основные пользовательские сценарии реализованы. В дальнейшем планируется добавить гостевой деморежим без регистрации, чтобы посетители могли познакомиться с приложением на демонстрационных данных.
+
+Разработка: [Olyshon](https://github.com/Olyshon)
+
+Создано с использованием [Lovable](https://lovable.dev/).
