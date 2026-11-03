@@ -4,7 +4,7 @@ GO Tracker — веб-приложение для планирования ли�
 
 Проект разработан как функциональный MVP с использованием AI-assisted development и платформы Lovable.
 
-[Открыть приложение](https://go-tracker-olga.lovable.app/) · [Исходный код](https://github.com/Olyshon/go-tracker-olga)
+[Открыть приложение](https://go-tracker-olga.lovable.app/) · [Исходный код](https://github.com/Olyshon/go-tracker)
 
 ## Интерфейс приложения
 
@@ -107,8 +107,8 @@ GO Tracker — веб-приложение для планирования ли�
 Необходимы Node.js и npm.
 
 ```sh
-git clone https://github.com/Olyshon/go-tracker-olga.git
-cd go-tracker-olga
+git clone https://github.com/Olyshon/go-tracker.git
+cd go-tracker
 npm install
 npm run dev
 ```
