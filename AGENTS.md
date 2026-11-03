@@ -15,3 +15,5 @@
 - Cloud writes go through a serialized PlannerCloudSession and an owner-scoped version row locked in the transaction; stale or uncertain writes block editing until reload to prevent lost history.
 - The dashboard lives under the authenticated layout at /dashboard; / and /auth are public account entry points. One root auth subscriber handles identity transitions and cache invalidation.
 - All tracker tables enforce owner RLS and composite owner/habit foreign keys; account initialization returns empty data and never accesses legacy browser records.
+- Public password recovery is authorized only by the root PASSWORD_RECOVERY event and a revalidated matching user; browser-safe auth UX helpers centralize validation and safe errors without changing hosted policy.
+- Goal and habit removal use a shared named confirmation dialog; confirmed habit removal still terminates revisions rather than destroying history.

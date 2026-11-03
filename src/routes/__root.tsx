@@ -126,6 +126,7 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
   useEffect(() => {
+    const recoveryLink = new URLSearchParams(window.location.hash.slice(1)).get('type') === 'recovery';
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
         setRecoveryUser(session?.user.id ?? null);
@@ -139,7 +140,7 @@ function RootComponent() {
         void router.navigate({ to: '/auth', replace: true });
       } else {
         void queryClient.invalidateQueries();
-        if (router.state.location.pathname === '/auth') void router.navigate({ to: '/dashboard', replace: true });
+        if (!recoveryLink && router.state.location.pathname === '/auth') void router.navigate({ to: '/dashboard', replace: true });
       }
       void router.invalidate();
     });
