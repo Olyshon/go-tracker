@@ -41,6 +41,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
+    const recoveryLink = new URLSearchParams(window.location.hash.slice(1)).get('type') === 'recovery';
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
 
@@ -139,7 +140,7 @@ function RootComponent() {
         void router.navigate({ to: '/auth', replace: true });
       } else {
         void queryClient.invalidateQueries();
-        if (router.state.location.pathname === '/auth') void router.navigate({ to: '/dashboard', replace: true });
+        if (!recoveryLink && router.state.location.pathname === '/auth') void router.navigate({ to: '/dashboard', replace: true });
       }
       void router.invalidate();
     });
