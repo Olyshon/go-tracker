@@ -1,6 +1,7 @@
 # GO Tracker
-- [ ] Add public password recovery, verify actual password requirements, improve Russian auth errors and visibility controls.
-- [ ] Add named goal/habit delete confirmations without changing history behavior; run focused checks.
+- [x] Add public password recovery, owner-confirmed six-character password policy, safe Russian errors and visibility controls; hosted settings unchanged.
+- [x] Add named goal/habit delete confirmations preserving termination behavior; 16 focused tests and mocked browser validation/recovery/cancel/confirm flows pass, no page errors.
+- [ ] Verify real recovery-email delivery and reset on the published origin: blocked until an actual email link is tested and the app is published; no real user passwords or records changed during checks.
 - [x] Add email/password signup, login and logout with Lovable Cloud; email confirmation remains enabled.
 - [x] Replace authenticated tracker storage with user-isolated database tables while preserving dated history and legacy browser records.
 - [x] Verify persistence, historical schedules, monthly goals, account isolation and unchanged UI: 41 tests pass; real two-account browser flow and RLS probes pass. Signup rejects reserved test addresses; real confirmation-email delivery and published deployment remain unverified.
