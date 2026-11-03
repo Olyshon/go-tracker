@@ -41,7 +41,6 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
-    const recoveryLink = new URLSearchParams(window.location.hash.slice(1)).get('type') === 'recovery';
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
 
@@ -127,6 +126,7 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
   useEffect(() => {
+    const recoveryLink = new URLSearchParams(window.location.hash.slice(1)).get('type') === 'recovery';
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
         setRecoveryUser(session?.user.id ?? null);
